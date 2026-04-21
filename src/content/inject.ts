@@ -100,3 +100,17 @@ RegExp.prototype.test = function(str: any) {
     return originalTest.call(this, str);
 };
 
+let dumpedGeoState = false;
+setInterval(() => {
+    if (dumpedGeoState) return;
+    const geoEl = document.querySelector('.geo-guessr, .street-view');
+    if (geoEl && (window as any).__NUXT__) {
+        dumpedGeoState = true;
+        console.log("[PWG NuxtSpy] 🗺️ Dumping Nuxt state to find country...");
+        try {
+            console.log(JSON.stringify((window as any).__NUXT__.state, null, 2));
+        } catch (e) {
+            console.log("Could not stringify:", (window as any).__NUXT__);
+        }
+    }
+}, 2000);

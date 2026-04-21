@@ -93,6 +93,20 @@
         }
         return originalTest.call(this, str);
       };
+      var dumpedGeoState = false;
+      setInterval(() => {
+        if (dumpedGeoState) return;
+        const geoEl = document.querySelector(".geo-guessr, .street-view");
+        if (geoEl && window.__NUXT__) {
+          dumpedGeoState = true;
+          console.log("[PWG NuxtSpy] \u{1F5FA}\uFE0F Dumping Nuxt state to find country...");
+          try {
+            console.log(JSON.stringify(window.__NUXT__.state, null, 2));
+          } catch (e) {
+            console.log("Could not stringify:", window.__NUXT__);
+          }
+        }
+      }, 2e3);
     }
   });
   require_inject();
