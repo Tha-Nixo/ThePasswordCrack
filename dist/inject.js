@@ -54,10 +54,11 @@
         });
         return send.apply(this, arguments);
       };
-      var isOurPassword = (str) => {
-        return typeof str === "string" && (str.includes("Helicopter") || str.includes("pepsi") || str.includes("399"));
-      };
       var originalIncludes = String.prototype.includes;
+      var isOurPassword = (str) => {
+        if (typeof str !== "string") return false;
+        return originalIncludes.call(str, "Helicopter") || originalIncludes.call(str, "pepsi") || originalIncludes.call(str, "399");
+      };
       String.prototype.includes = function(searchString, position) {
         if (isOurPassword(this) && typeof searchString === "string" && searchString.length > 2) {
           if (!["Helicopter", "pepsi", "399", "clump", "snore"].includes(searchString)) {

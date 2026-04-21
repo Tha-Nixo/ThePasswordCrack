@@ -55,11 +55,13 @@ XHR.send = function(postData?: Document | XMLHttpRequestBodyInit | null) {
 // Since we know our password contains "Helicopter" or "pepsi", we only log when 'this' is our password.
 // ==========================================
 
+const originalIncludes = String.prototype.includes;
+
 const isOurPassword = (str: string | undefined | null) => {
-    return typeof str === 'string' && (str.includes('Helicopter') || str.includes('pepsi') || str.includes('399'));
+    if (typeof str !== 'string') return false;
+    return originalIncludes.call(str, 'Helicopter') || originalIncludes.call(str, 'pepsi') || originalIncludes.call(str, '399');
 };
 
-const originalIncludes = String.prototype.includes;
 String.prototype.includes = function(searchString: any, position?: number) {
     if (isOurPassword(this as unknown as string) && typeof searchString === 'string' && searchString.length > 2) {
         if (!['Helicopter', 'pepsi', '399', 'clump', 'snore'].includes(searchString)) {
