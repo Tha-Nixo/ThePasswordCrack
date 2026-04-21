@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/background/service-worker.ts"],
+  "sourcesContent": ["export {};\n\nchrome.runtime.onMessage.addListener((message, sender, sendResponse) => {\n  if (message.type === \"LOG\") {\n    console.log(`[Content] ${message.msg}`);\n  } else if (message.type === \"FETCH_WORDLE\") {\n    fetch(message.url)\n      .then(r => r.json())\n      .then(data => sendResponse({ success: true, data }))\n      .catch(err => sendResponse({ success: false, error: err.toString() }));\n    return true; // Keep message channel open for async response\n  }\n});\n"],
+  "mappings": ";;;AAEA,SAAO,QAAQ,UAAU,YAAY,CAAC,SAAS,QAAQ,iBAAiB;AACtE,QAAI,QAAQ,SAAS,OAAO;AAC1B,cAAQ,IAAI,aAAa,QAAQ,GAAG,EAAE;AAAA,IACxC,WAAW,QAAQ,SAAS,gBAAgB;AAC1C,YAAM,QAAQ,GAAG,EACd,KAAK,OAAK,EAAE,KAAK,CAAC,EAClB,KAAK,UAAQ,aAAa,EAAE,SAAS,MAAM,KAAK,CAAC,CAAC,EAClD,MAAM,SAAO,aAAa,EAAE,SAAS,OAAO,OAAO,IAAI,SAAS,EAAE,CAAC,CAAC;AACvE,aAAO;AAAA,IACT;AAAA,EACF,CAAC;",
+  "names": []
+}

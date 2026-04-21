@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+  <title>Password Game Solver</title>
+</head>
+<body>
+  <div class="container">
+    <h2>Password Game Solver</h2>
+    
+    <div id="logs" class="logs-container">
+      <!-- Logs output here -->
+    </div>
+
+    <div id="human-input-section" class="hidden">
+      <h3 id="human-prompt">Human Input Needed</h3>
+      <input type="text" id="human-input" placeholder="Type answer here..." />
+      <div id="human-preview" class="preview-warnings"></div>
+      <button id="human-submit">Submit</button>
+    </div>
+  </div>
+  <script src="dist/popup.js"></script>
+</body>
+</html>
