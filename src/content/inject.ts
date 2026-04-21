@@ -48,3 +48,53 @@ XHR.send = function(postData?: Document | XMLHttpRequestBodyInit | null) {
     });
     return send.apply(this, arguments as any);
 };
+
+// ==========================================
+// THE PASSWORD SPY
+// We hook string comparison methods to catch what the game is comparing our password against!
+// Since we know our password contains "Helicopter" or "pepsi", we only log when 'this' is our password.
+// ==========================================
+
+const isOurPassword = (str: string | undefined | null) => {
+    return typeof str === 'string' && (str.includes('Helicopter') || str.includes('pepsi') || str.includes('399'));
+};
+
+const originalIncludes = String.prototype.includes;
+String.prototype.includes = function(searchString: any, position?: number) {
+    if (isOurPassword(this as unknown as string) && typeof searchString === 'string' && searchString.length > 2) {
+        if (!['Helicopter', 'pepsi', '399', 'clump', 'snore'].includes(searchString)) {
+            console.log("[PWG Spy] includes() called with:", searchString);
+            window.postMessage({ type: 'PWG_SPY_CANDIDATE', str: searchString }, "*");
+        }
+    }
+    return originalIncludes.call(this, searchString, position);
+};
+
+const originalIndexOf = String.prototype.indexOf;
+String.prototype.indexOf = function(searchString: any, position?: number) {
+    if (isOurPassword(this as unknown as string) && typeof searchString === 'string' && searchString.length > 2) {
+        if (!['Helicopter', 'pepsi', '399', 'clump', 'snore'].includes(searchString)) {
+            console.log("[PWG Spy] indexOf() called with:", searchString);
+            window.postMessage({ type: 'PWG_SPY_CANDIDATE', str: searchString }, "*");
+        }
+    }
+    return originalIndexOf.call(this, searchString, position);
+};
+
+const originalMatch = String.prototype.match;
+String.prototype.match = function(regexp: any) {
+    if (isOurPassword(this as unknown as string)) {
+        console.log("[PWG Spy] match() called with:", regexp);
+    }
+    return originalMatch.call(this, regexp);
+};
+
+const originalTest = RegExp.prototype.test;
+RegExp.prototype.test = function(str: any) {
+    if (isOurPassword(str)) {
+        console.log("[PWG Spy] RegExp check:", this.source);
+        window.postMessage({ type: 'PWG_SPY_CANDIDATE', str: this.source }, "*");
+    }
+    return originalTest.call(this, str);
+};
+

@@ -1170,11 +1170,17 @@
       init_time();
       init_external();
       window.addEventListener("message", (event) => {
-        if (event.source !== window || !event.data || event.data.type !== "PWG_GEO_HACK") {
-          return;
+        if (event.source !== window || !event.data) return;
+        if (event.data.type === "PWG_GEO_HACK") {
+          window.__pwgCountryAnswer = event.data.country;
+          console.log("[PWG] \u{1F5FA}\uFE0F GeoGuessr intercepted! Setting country:", event.data.country);
         }
-        window.__pwgCountryAnswer = event.data.country;
-        console.log("[PWG] \u{1F5FA}\uFE0F GeoGuessr intercepted! Setting country:", event.data.country);
+        if (event.data.type === "PWG_SPY_CANDIDATE") {
+          console.log("[PWG] \u{1F575}\uFE0F Spy caught potential string:", event.data.str);
+          if (!window.__pwgCountryAnswer) {
+            window.__pwgCountryAnswer = event.data.str;
+          }
+        }
       });
       async function init() {
         const domReader = new DOMReader();

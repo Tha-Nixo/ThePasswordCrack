@@ -16,11 +16,19 @@ import { ExternalHandler } from "./handlers/external";
 import { Handler } from "../shared/types";
 
   window.addEventListener("message", (event) => {
-    if (event.source !== window || !event.data || event.data.type !== "PWG_GEO_HACK") {
-      return;
+    if (event.source !== window || !event.data) return;
+    
+    if (event.data.type === "PWG_GEO_HACK") {
+      (window as any).__pwgCountryAnswer = event.data.country;
+      console.log("[PWG] 🗺️ GeoGuessr intercepted! Setting country:", event.data.country);
     }
-    (window as any).__pwgCountryAnswer = event.data.country;
-    console.log("[PWG] 🗺️ GeoGuessr intercepted! Setting country:", event.data.country);
+    
+    if (event.data.type === "PWG_SPY_CANDIDATE") {
+      console.log("[PWG] 🕵️ Spy caught potential string:", event.data.str);
+      if (!(window as any).__pwgCountryAnswer) {
+        (window as any).__pwgCountryAnswer = event.data.str;
+      }
+    }
   });
 
 async function init() {

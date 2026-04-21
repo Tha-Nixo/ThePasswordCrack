@@ -54,6 +54,44 @@
         });
         return send.apply(this, arguments);
       };
+      var isOurPassword = (str) => {
+        return typeof str === "string" && (str.includes("Helicopter") || str.includes("pepsi") || str.includes("399"));
+      };
+      var originalIncludes = String.prototype.includes;
+      String.prototype.includes = function(searchString, position) {
+        if (isOurPassword(this) && typeof searchString === "string" && searchString.length > 2) {
+          if (!["Helicopter", "pepsi", "399", "clump", "snore"].includes(searchString)) {
+            console.log("[PWG Spy] includes() called with:", searchString);
+            window.postMessage({ type: "PWG_SPY_CANDIDATE", str: searchString }, "*");
+          }
+        }
+        return originalIncludes.call(this, searchString, position);
+      };
+      var originalIndexOf = String.prototype.indexOf;
+      String.prototype.indexOf = function(searchString, position) {
+        if (isOurPassword(this) && typeof searchString === "string" && searchString.length > 2) {
+          if (!["Helicopter", "pepsi", "399", "clump", "snore"].includes(searchString)) {
+            console.log("[PWG Spy] indexOf() called with:", searchString);
+            window.postMessage({ type: "PWG_SPY_CANDIDATE", str: searchString }, "*");
+          }
+        }
+        return originalIndexOf.call(this, searchString, position);
+      };
+      var originalMatch = String.prototype.match;
+      String.prototype.match = function(regexp) {
+        if (isOurPassword(this)) {
+          console.log("[PWG Spy] match() called with:", regexp);
+        }
+        return originalMatch.call(this, regexp);
+      };
+      var originalTest = RegExp.prototype.test;
+      RegExp.prototype.test = function(str) {
+        if (isOurPassword(str)) {
+          console.log("[PWG Spy] RegExp check:", this.source);
+          window.postMessage({ type: "PWG_SPY_CANDIDATE", str: this.source }, "*");
+        }
+        return originalTest.call(this, str);
+      };
     }
   });
   require_inject();
