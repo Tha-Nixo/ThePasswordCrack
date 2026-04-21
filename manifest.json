@@ -6,6 +6,16 @@
   "host_permissions": [
     "https://www.nytimes.com/*"
   ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "dist/inject.js"
+      ],
+      "matches": [
+        "https://neal.fun/*"
+      ]
+    }
+  ],
   "content_scripts": [{
     "matches": ["https://neal.fun/password-game/*"],
     "js": ["dist/content.js"],
