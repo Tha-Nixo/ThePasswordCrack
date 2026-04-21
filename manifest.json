@@ -6,21 +6,20 @@
   "host_permissions": [
     "https://www.nytimes.com/*"
   ],
-  "web_accessible_resources": [
+
+  "content_scripts": [
     {
-      "resources": [
-        "dist/inject.js"
-      ],
-      "matches": [
-        "https://neal.fun/*"
-      ]
+      "matches": ["https://neal.fun/password-game/*"],
+      "js": ["dist/inject.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://neal.fun/password-game/*"],
+      "js": ["dist/content.js"],
+      "run_at": "document_idle"
     }
   ],
-  "content_scripts": [{
-    "matches": ["https://neal.fun/password-game/*"],
-    "js": ["dist/content.js"],
-    "run_at": "document_idle"
-  }],
   "background": {
     "service_worker": "dist/service-worker.js"
   },

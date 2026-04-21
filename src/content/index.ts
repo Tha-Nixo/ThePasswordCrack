@@ -15,17 +15,6 @@ import { TimeHandler } from "./handlers/time";
 import { ExternalHandler } from "./handlers/external";
 import { Handler } from "../shared/types";
 
-function injectInterceptor() {
-  if ((window as any).__pwgInterceptorInjected) return;
-  (window as any).__pwgInterceptorInjected = true;
-
-  const script = document.createElement('script');
-  script.src = chrome.runtime.getURL('dist/inject.js');
-  script.onload = function() {
-    (this as HTMLScriptElement).remove();
-  };
-  (document.head || document.documentElement).appendChild(script);
-
   window.addEventListener("message", (event) => {
     if (event.source !== window || !event.data || event.data.type !== "PWG_GEO_HACK") {
       return;
@@ -33,10 +22,8 @@ function injectInterceptor() {
     (window as any).__pwgCountryAnswer = event.data.country;
     console.log("[PWG] 🗺️ GeoGuessr intercepted! Setting country:", event.data.country);
   });
-}
 
 async function init() {
-  injectInterceptor();
 
   const domReader = new DOMReader();
   const domWriter = new DOMWriter();
