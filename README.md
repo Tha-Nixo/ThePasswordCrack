@@ -4,7 +4,7 @@
 <h3>The ultimate automated solver for <a href="https://neal.fun/password-game/">The Password Game</a></h3>
 
 <p>
-  <img src="https://img.shields.io/badge/Rules_Solved-24%2F35-blueviolet?style=for-the-badge" alt="Rules Solved">
+  <img src="https://img.shields.io/badge/Rules_Solved-28%2F35-blueviolet?style=for-the-badge" alt="Rules Solved">
   <img src="https://img.shields.io/badge/TypeScript-100%25-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/Chrome-Manifest_V3-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Manifest V3">
   <img src="https://img.shields.io/badge/Build-esbuild-FFCF00?style=for-the-badge&logo=esbuild&logoColor=black" alt="esbuild">
@@ -40,6 +40,8 @@
 | 🎬 **YouTube Database** | 3,601-video lookup table for instant duration-matched URL injection |
 | 🔤 **Smart Formatting** | HTML-aware vowel bolding that preserves URLs and tag integrity |
 | ⌨️ **ProseMirror Writer** | Escalation ladder to inject text into the game's rich-text editor |
+| 🩸 **Sacrifice Engine** | Automatically identifies unused letters to pass Rule 25 without breaking the password |
+| 🎨 **Dual-Layer Color Intercept** | Combines CSS computed-style scraping with memory-spy interception to grab the Rule 28 hex code |
 
 ---
 
@@ -71,7 +73,11 @@
 | 22 | Affirmation | `TextHandler` | ✅ Auto |
 | 23 | Feed Paul 🐛🐛🐛 | `TextHandler` | ✅ Auto |
 | 24 | YouTube video URL | `ExternalHandler + YouTube DB` | ✅ Auto |
-| 25+ | *Work in progress...* | — | 🔜 |
+| 25 | A sacrifice must be made | `SacrificeHandler` | ✅ Auto |
+| 26 | Italic vs Bold ratio | `formatPassword()` | ✅ Auto |
+| 27 | 30% Wingdings | `formatPassword()` | ✅ Auto |
+| 28 | Color in hex | `Spy + DOMReader` | ✅ Auto |
+| 29+ | *Work in progress...* | — | 🔜 |
 
 ---
 
@@ -113,11 +119,11 @@ graph TB
     IDX --> ML
     ML --> DR
     ML --> DW
-    ML --> TH & PH & NH & EH & HH
+    ML --> TH & PH & NH & EH & HH & SH
     EH --> YT
     NH --> BT
     NH --> EL
-    TH & PH & NH & EH --> PE
+    TH & PH & NH & EH & SH --> PE
     PE --> DW
 
     style INJ fill:#1a1a2e,stroke:#e94560,color:#fff
@@ -179,11 +185,11 @@ This is critical because video IDs often contain uppercase letters like `M`, `L`
 
 One of the trickiest challenges is Rule 18 (atomic numbers sum to 200). Every uppercase letter in the password potentially matches a periodic table element. The solver controls this by:
 
-1. **Low-pollution base word**: `strongpassword1A!` — all lowercase except one required `A`, contributing zero atomic weight
+1. **Low-pollution base word**: `A!111` — minimized unique letters to reserve "unused" characters for Rule 25 (Sacrifice)
 2. **Lowercase month**: `february` instead of `February` — avoids `Fe` (Iron, 26) contamination
 3. **Lowercase affirmation**: `i am loved` instead of `I am loved` — avoids `I` (Iodine, 53)
 4. **Dynamic element injection**: The `ElementSolver` calculates the gap between current atomic sum and 200, then injects the minimal set of element symbols (e.g., `Gd` for Gadolinium = 64)
-5. **URL isolation**: YouTube URLs wrapped in `<a>` tags hide their uppercase letters from the element scanner
+5. **URL & Domain optimization**: Uses shortened `youtu.be` links to save letters like `C`, `W`, and `M`. YouTube URLs are wrapped in `<a>` tags to hide uppercase letters from the element scanner.
 
 ---
 

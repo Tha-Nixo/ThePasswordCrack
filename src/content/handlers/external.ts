@@ -116,7 +116,7 @@ export class ExternalHandler implements Handler {
     }
     
     if (totalSeconds > 0 && youtubeIds[totalSeconds]) {
-      const url = "https://www.youtube.com/watch?v=" + youtubeIds[totalSeconds];
+      const url = "https://youtu.be/" + youtubeIds[totalSeconds];
       return {
         zone: "youtube",
         content: ` <a href="${url}">${url}</a> `,

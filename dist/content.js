@@ -25,12 +25,45 @@
             const descEl = el.querySelector(".rule-desc");
             const headerText = topEl?.textContent || "";
             const descText = descEl?.textContent || "";
-            const fullText = `${headerText} ${descText}`.trim();
+            let extraText = "";
+            if (headerText.includes("Rule 28")) {
+              const spyColor = window.__pwgColorAnswer;
+              const colorBox = el.querySelector(".rand-color");
+              if (spyColor) {
+                extraText = ` ${spyColor}`;
+              } else if (colorBox) {
+                const bg = window.getComputedStyle(colorBox).backgroundColor;
+                const match = bg.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
+                if (match) {
+                  const r = parseInt(match[1]);
+                  const g = parseInt(match[2]);
+                  const b = parseInt(match[3]);
+                  extraText = ` #${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+                }
+              } else {
+                const children = el.querySelectorAll(".rule-desc *");
+                for (let i = 0; i < children.length; i++) {
+                  const htmlChild = children[i];
+                  const bg = window.getComputedStyle(htmlChild).backgroundColor;
+                  if (bg && bg.includes("rgb") && !bg.includes("rgba") && htmlChild.className !== "rule-icon") {
+                    const match = bg.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
+                    if (match) {
+                      const r = parseInt(match[1]);
+                      const g = parseInt(match[2]);
+                      const b = parseInt(match[3]);
+                      extraText = ` #${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+            const fullText = `${headerText} ${descText}${extraText}`.trim();
             const ruleNumberMatch = headerText.match(/Rule\s*(\d+)/i);
-            const ruleNumber = ruleNumberMatch ? parseInt(ruleNumberMatch[1]) : this.hashCode(fullText);
+            const ruleNumber = ruleNumberMatch ? parseInt(ruleNumberMatch[1], 10) : this.hashCode(fullText);
             rules.push({
               number: ruleNumber,
-              text: descText,
+              text: (descText + extraText).trim(),
               // Pass only the description to solvers to avoid Rule N number collision
               satisfied: this.isRuleSatisfied(el),
               category: "unknown"
@@ -1115,7 +1148,7 @@
           this.log("Initializing...");
           const strategy = await this.domWriter.detectStrategy();
           this.log(`Write strategy: ${strategy}`);
-          this.engine.setZone("base", "strongpasswordA!", 10, []);
+          this.engine.setZone("base", "A!111", 10, []);
           this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
           this.domObserver.onRulesChanged(() => this.scheduleTick());
           setInterval(() => this.scheduleTick(), 5e3);
@@ -1322,12 +1355,72 @@
           return this.humanHandler.requestInput(rule, prompt);
         }
         formatPassword(password) {
+          let formatted = password;
+          let boldCount = 0;
           if (this.knownRules.has(19)) {
-            return password.replace(/(<[^>]*>)|([aeiouyAEIOUY])/g, (match, tag, vowel) => {
-              return tag ? tag : `<strong>${vowel}</strong>`;
+            formatted = formatted.replace(/(<[^>]*>)|([aeiouyAEIOUY])/g, (match, tag, vowel) => {
+              if (tag) return tag;
+              boldCount++;
+              return `<strong>${vowel}</strong>`;
             });
           }
-          return password;
+          if (this.knownRules.has(26)) {
+            let neededItalics = boldCount * 2;
+            formatted = formatted.replace(/(<[^>]*>)|(<strong>.*?<\/strong>)|([a-zA-Z0-9])/g, (match, tag, strongTag, char) => {
+              if (tag) return tag;
+              if (strongTag) return strongTag;
+              if (neededItalics > 0) {
+                neededItalics--;
+                return `<em>${char}</em>`;
+              }
+              return char;
+            });
+            if (neededItalics > 0) {
+              const filler = Array.from({ length: neededItalics }).map(() => `<em>z</em>`).join("");
+              formatted += filler;
+            }
+          }
+          if (this.knownRules.has(27)) {
+            let plainLength = 0;
+            formatted.replace(/(<[^>]*>)|(.)/g, (match, tag) => {
+              if (!tag) plainLength++;
+              return match;
+            });
+            let neededWingdings = Math.ceil(plainLength * 0.35);
+            formatted = formatted.replace(/(<[^>]*>)|([^<])/g, (match, tag, char) => {
+              if (tag) return tag;
+              if (neededWingdings > 0 && !/[0-9IVXLCDM]/.test(char) && char.trim().length > 0) {
+                neededWingdings--;
+                return `<span style="font-family: Wingdings;">${char}</span>`;
+              }
+              return char;
+            });
+          }
+          if (this.knownRules.has(29)) {
+            formatted = formatted.replace(/(<[^>]*>)|([IVXLCDM])/g, (match, tag, roman) => {
+              if (tag) return tag;
+              return `<span style="font-family: 'Times New Roman';">${roman}</span>`;
+            });
+          }
+          if (this.knownRules.has(30)) {
+            formatted = formatted.replace(/(<[^>]*>)|([0-9])/g, (match, tag, digit) => {
+              if (tag) return tag;
+              const d = parseInt(digit, 10);
+              const sq = d * d;
+              return `<span style="font-size: ${sq}px;">${digit}</span>`;
+            });
+          }
+          if (this.knownRules.has(31)) {
+            const letterCounts = /* @__PURE__ */ new Map();
+            formatted = formatted.replace(/(<[^>]*>)|([a-zA-Z])/g, (match, tag, letter) => {
+              if (tag) return tag;
+              const lower = letter.toLowerCase();
+              const count = (letterCounts.get(lower) || 0) + 1;
+              letterCounts.set(lower, count);
+              return `<span style="font-size: ${10 + count}px;">${letter}</span>`;
+            });
+          }
+          return formatted;
         }
         log(msg, level = "info") {
           const prefix = `[PWG ${(/* @__PURE__ */ new Date()).toLocaleTimeString()}]`;
@@ -1467,6 +1560,16 @@
               content: "i am loved",
               priority: 76
             };
+          }
+          if (t.includes("color in hex")) {
+            const hexMatch = rule.text.match(/#[0-9a-fA-F]{6}/);
+            if (hexMatch) {
+              return {
+                zone: "color_hex",
+                content: hexMatch[0],
+                priority: 80
+              };
+            }
           }
           return {
             zone: "text",
@@ -1672,7 +1775,7 @@
             totalSeconds += parseInt(secMatch[1], 10);
           }
           if (totalSeconds > 0 && youtubeIds[totalSeconds]) {
-            const url = "https://www.youtube.com/watch?v=" + youtubeIds[totalSeconds];
+            const url = "https://youtu.be/" + youtubeIds[totalSeconds];
             return {
               zone: "youtube",
               content: ` <a href="${url}">${url}</a> `,
@@ -2017,6 +2120,13 @@
             }
           }
           const candidateLower = candidate.toLowerCase();
+          if (/^#[0-9a-f]{6}$/i.test(candidate)) {
+            if (!window.__pwgColorAnswer || window.__pwgColorAnswer !== candidateLower) {
+              window.__pwgColorAnswer = candidateLower;
+              console.log("[PWG] \u{1F3A8} Color detected from spy:", candidateLower);
+            }
+            return;
+          }
           if (!window.__pwgCaptchaAnswer && candidate.length >= 3 && candidate.length <= 8 && /^[a-z0-9]+$/i.test(candidate) && !KNOWN_COUNTRIES.has(candidateLower) && !KNOWN_GAME_STRINGS.has(candidateLower) && !CHESS_REGEX.test(candidate) && !CASTLING_REGEX.test(candidate)) {
             window.__pwgCaptchaAnswer = candidate;
             console.log("[PWG] \u{1F524} CAPTCHA detected from spy:", candidate);

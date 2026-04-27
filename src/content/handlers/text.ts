@@ -70,8 +70,16 @@ export class TextHandler implements Handler {
       };
     }
 
-
-    
+    if (t.includes("color in hex")) {
+      const hexMatch = rule.text.match(/#[0-9a-fA-F]{6}/);
+      if (hexMatch) {
+        return {
+          zone: "color_hex",
+          content: hexMatch[0],
+          priority: 80
+        };
+      }
+    }
 
 
     return {

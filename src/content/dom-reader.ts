@@ -14,14 +14,51 @@ export class DOMReader {
       
       const headerText = topEl?.textContent || "";
       const descText = descEl?.textContent || "";
-      const fullText = `${headerText} ${descText}`.trim();
+      let extraText = "";
+
+      if (headerText.includes("Rule 28")) {
+        const spyColor = (window as any).__pwgColorAnswer;
+        const colorBox = el.querySelector(".rand-color") as HTMLElement;
+        
+        if (spyColor) {
+          extraText = ` ${spyColor}`;
+        } else if (colorBox) {
+          const bg = window.getComputedStyle(colorBox).backgroundColor;
+          const match = bg.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
+          if (match) {
+            const r = parseInt(match[1]);
+            const g = parseInt(match[2]);
+            const b = parseInt(match[3]);
+            extraText = ` #${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+          }
+        } else {
+          // generic fallback
+          const children = el.querySelectorAll(".rule-desc *");
+          for (let i = 0; i < children.length; i++) {
+            const htmlChild = children[i] as HTMLElement;
+            const bg = window.getComputedStyle(htmlChild).backgroundColor;
+            if (bg && bg.includes("rgb") && !bg.includes("rgba") && htmlChild.className !== "rule-icon") {
+              const match = bg.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
+              if (match) {
+                const r = parseInt(match[1]);
+                const g = parseInt(match[2]);
+                const b = parseInt(match[3]);
+                extraText = ` #${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      const fullText = `${headerText} ${descText}${extraText}`.trim();
       
       const ruleNumberMatch = headerText.match(/Rule\s*(\d+)/i);
-      const ruleNumber = ruleNumberMatch ? parseInt(ruleNumberMatch[1]) : this.hashCode(fullText);
+      const ruleNumber = ruleNumberMatch ? parseInt(ruleNumberMatch[1], 10) : this.hashCode(fullText);
 
       rules.push({
         number: ruleNumber,
-        text: descText, // Pass only the description to solvers to avoid Rule N number collision
+        text: (descText + extraText).trim(), // Pass only the description to solvers to avoid Rule N number collision
         satisfied: this.isRuleSatisfied(el),
         category: "unknown"
       });

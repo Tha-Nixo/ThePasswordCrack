@@ -101,6 +101,16 @@ import { Handler } from "../shared/types";
       // CAPTCHA detection — short alphanumeric string that isn't a country, chess move, or known keyword
       // The game checks password.includes(captchaText) where captchaText is typically 5 chars, lowercase alphanumeric
       const candidateLower = candidate.toLowerCase();
+      
+      // Hex Color detection
+      if (/^#[0-9a-f]{6}$/i.test(candidate)) {
+        if (!(window as any).__pwgColorAnswer || (window as any).__pwgColorAnswer !== candidateLower) {
+          (window as any).__pwgColorAnswer = candidateLower;
+          console.log("[PWG] 🎨 Color detected from spy:", candidateLower);
+        }
+        return; // Don't process color as CAPTCHA
+      }
+
       if (
         !( window as any).__pwgCaptchaAnswer &&
         candidate.length >= 3 && candidate.length <= 8 &&

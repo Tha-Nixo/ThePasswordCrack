@@ -57,10 +57,11 @@
       var originalIncludes = String.prototype.includes;
       function isOurPassword(str) {
         if (!str || typeof str !== "string" || str.length < 5) return false;
+        if (str.length > 30) return true;
         const lowerStr = str.toLowerCase();
-        return originalIncludes.call(lowerStr, "strongpassword") || originalIncludes.call(lowerStr, "may");
+        return originalIncludes.call(lowerStr, "a!111") || originalIncludes.call(lowerStr, "a!") || originalIncludes.call(lowerStr, "strongpassword") || originalIncludes.call(lowerStr, "february") || originalIncludes.call(lowerStr, "pepsi") || originalIncludes.call(lowerStr, "may");
       }
-      var SPY_IGNORE = /* @__PURE__ */ new Set(["Helicopter", "pepsi", "strongpassword", "399", "699", "clump", "snore"]);
+      var SPY_IGNORE = /* @__PURE__ */ new Set(["Helicopter", "pepsi", "strongpassword", "a!111", "399", "699", "clump", "snore"]);
       String.prototype.includes = function(searchString, position) {
         if (isOurPassword(this) && typeof searchString === "string" && searchString.length > 2) {
           if (!SPY_IGNORE.has(searchString)) {

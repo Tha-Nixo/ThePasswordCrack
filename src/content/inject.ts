@@ -60,12 +60,20 @@ const originalIncludes = String.prototype.includes;
 function isOurPassword(str: string): boolean {
     if (!str || typeof str !== 'string' || str.length < 5) return false;
     
+    // By the time we need the spy, the password is usually long.
+    if (str.length > 30) return true;
+    
     const lowerStr = str.toLowerCase();
-    return originalIncludes.call(lowerStr, 'strongpassword') || originalIncludes.call(lowerStr, 'may');
+    return originalIncludes.call(lowerStr, 'a!111') || 
+           originalIncludes.call(lowerStr, 'a!') ||
+           originalIncludes.call(lowerStr, 'strongpassword') || 
+           originalIncludes.call(lowerStr, 'february') ||
+           originalIncludes.call(lowerStr, 'pepsi') ||
+           originalIncludes.call(lowerStr, 'may');
 }
 
 // Known strings to ignore in spy logging
-const SPY_IGNORE = new Set(['Helicopter', 'pepsi', 'strongpassword', '399', '699', 'clump', 'snore']);
+const SPY_IGNORE = new Set(['Helicopter', 'pepsi', 'strongpassword', 'a!111', '399', '699', 'clump', 'snore']);
 
 // Known affirmation/wordle/sponsor strings the game checks (not captchas)
 const KNOWN_CHECKS = new Set([

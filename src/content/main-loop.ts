@@ -36,7 +36,7 @@ export class MainLoop {
     const strategy = await this.domWriter.detectStrategy();
     this.log(`Write strategy: ${strategy}`);
 
-    this.engine.setZone("base", "strongpasswordA!", 10, []);
+    this.engine.setZone("base", "A!111", 10, []);
     this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
 
     this.domObserver.onRulesChanged(() => this.scheduleTick());
@@ -288,12 +288,89 @@ export class MainLoop {
   }
 
   private formatPassword(password: string): string {
+    let formatted = password;
+    let boldCount = 0;
+
     if (this.knownRules.has(19)) {
-      return password.replace(/(<[^>]*>)|([aeiouyAEIOUY])/g, (match, tag, vowel) => {
-        return tag ? tag : `<strong>${vowel}</strong>`;
+      formatted = formatted.replace(/(<[^>]*>)|([aeiouyAEIOUY])/g, (match, tag, vowel) => {
+        if (tag) return tag;
+        boldCount++;
+        return `<strong>${vowel}</strong>`;
       });
     }
-    return password;
+
+    if (this.knownRules.has(26)) {
+      let neededItalics = boldCount * 2;
+      formatted = formatted.replace(/(<[^>]*>)|(<strong>.*?<\/strong>)|([a-zA-Z0-9])/g, (match, tag, strongTag, char) => {
+        if (tag) return tag;
+        if (strongTag) return strongTag;
+        
+        if (neededItalics > 0) {
+          neededItalics--;
+          return `<em>${char}</em>`;
+        }
+        return char;
+      });
+
+      if (neededItalics > 0) {
+        // Append extra characters if we ran out of consonants/digits
+        const filler = Array.from({ length: neededItalics }).map(() => `<em>z</em>`).join("");
+        formatted += filler;
+      }
+    }
+
+    // Rule 27: At least 30% Wingdings
+    if (this.knownRules.has(27)) {
+      let plainLength = 0;
+      formatted.replace(/(<[^>]*>)|(.)/g, (match, tag) => {
+        if (!tag) plainLength++;
+        return match;
+      });
+
+      let neededWingdings = Math.ceil(plainLength * 0.35); // 35% for safety
+      formatted = formatted.replace(/(<[^>]*>)|([^<])/g, (match, tag, char) => {
+        if (tag) return tag;
+        // Skip digits and Roman numerals to avoid conflicts with Rules 29 and 30
+        if (neededWingdings > 0 && !/[0-9IVXLCDM]/.test(char) && char.trim().length > 0) {
+          neededWingdings--;
+          return `<span style="font-family: Wingdings;">${char}</span>`;
+        }
+        return char;
+      });
+    }
+
+    // Rule 29: Roman numerals in Times New Roman
+    if (this.knownRules.has(29)) {
+      formatted = formatted.replace(/(<[^>]*>)|([IVXLCDM])/g, (match, tag, roman) => {
+        if (tag) return tag;
+        return `<span style="font-family: 'Times New Roman';">${roman}</span>`;
+      });
+    }
+
+    // Rule 30: Digit font size equals its square
+    if (this.knownRules.has(30)) {
+      formatted = formatted.replace(/(<[^>]*>)|([0-9])/g, (match, tag, digit) => {
+        if (tag) return tag;
+        const d = parseInt(digit, 10);
+        const sq = d * d;
+        return `<span style="font-size: ${sq}px;">${digit}</span>`;
+      });
+    }
+
+    // Rule 31: Every instance of the same letter must have a different font size
+    if (this.knownRules.has(31)) {
+      const letterCounts = new Map<string, number>();
+      formatted = formatted.replace(/(<[^>]*>)|([a-zA-Z])/g, (match, tag, letter) => {
+        if (tag) return tag;
+        const lower = letter.toLowerCase();
+        const count = (letterCounts.get(lower) || 0) + 1;
+        letterCounts.set(lower, count);
+        // Start from 10px and increment
+        return `<span style="font-size: ${10 + count}px;">${letter}</span>`;
+      });
+    }
+
+    return formatted;
   }
 
   private log(msg: string, level: "info" | "warn" | "error" = "info"): void {
