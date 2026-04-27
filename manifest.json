@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Password Game Solver",
-  "version": "1.0",
+  "version": "0.27",
   "permissions": ["activeTab", "storage"],
   "host_permissions": [
     "https://www.nytimes.com/*"
