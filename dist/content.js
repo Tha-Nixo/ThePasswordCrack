@@ -1030,7 +1030,11 @@
         solver;
         async solve(rule, engine, budgetTracker) {
           const budget = budgetTracker.compute(engine);
-          const solution = this.solver.solveAll([parseNumericConstraint(rule)], engine, budget);
+          const numericRules = engine.getRules().filter((r) => r.category === "numeric");
+          const constraints = numericRules.map((r) => parseNumericConstraint(r));
+          const solution = this.solver.solveAll(constraints, engine, budget);
+          if (solution?.roman !== void 0) engine.setZone("roman", solution.roman, 50, []);
+          if (solution?.elements !== void 0) engine.setZone("elements", solution.elements, 60, []);
           return {
             zone: "digits",
             content: solution?.digits || "",
@@ -1148,7 +1152,7 @@
           this.log("Initializing...");
           const strategy = await this.domWriter.detectStrategy();
           this.log(`Write strategy: ${strategy}`);
-          this.engine.setZone("base", "A!111", 10, []);
+          this.engine.setZone("base", "A!", 10, []);
           this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
           this.domObserver.onRulesChanged(() => this.scheduleTick());
           setInterval(() => this.scheduleTick(), 5e3);
@@ -1218,13 +1222,11 @@
                 }
               }
             }
-            if (passwordChanged) {
-              this.resolveAllNumeric();
-              this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
-              this.log(`Attempted to type: ${this.engine.getPassword()}`);
-              await this.domObserver.waitForStability();
-              this.log(`Actual text in editor AFTER typing: ${this.domWriter.getCurrentEditorText()}`);
-            }
+            this.resolveAllNumeric();
+            this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
+            this.log(`Attempted to type: ${this.engine.getPassword()}`);
+            await this.domObserver.waitForStability();
+            this.log(`Actual text in editor AFTER typing: ${this.domWriter.getCurrentEditorText()}`);
             const updatedRules = this.domReader.readRules();
             const broken = updatedRules.filter((r) => !r.satisfied && this.knownRules.has(r.number));
             if (broken.length > 0) {

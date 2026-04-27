@@ -166,7 +166,19 @@ export class NumericHandler implements Handler {
 
   async solve(rule: ClassifiedRule, engine: PasswordEngine, budgetTracker: BudgetTracker): Promise<ZoneUpdate> {
     const budget = budgetTracker.compute(engine);
-    const solution = this.solver.solveAll([parseNumericConstraint(rule)], engine, budget);
+    
+    // Find all numeric rules currently known
+    const numericRules = engine.getRules().filter(r => r.category === "numeric");
+    const constraints = numericRules.map(r => parseNumericConstraint(r));
+    
+    // Solve them all together to ensure harmony between Digits sum, Roman product, and Atomic sum
+    const solution = this.solver.solveAll(constraints, engine, budget);
+    
+    // Since this handler might be called for digits, roman, or elements rules,
+    // it will return the update for the specific rule type it was triggered for.
+    // However, it will also apply the other parts of the solution to the engine directly.
+    if (solution?.roman !== undefined) engine.setZone("roman", solution.roman, 50, []);
+    if (solution?.elements !== undefined) engine.setZone("elements", solution.elements, 60, []);
     
     return {
       zone: "digits",

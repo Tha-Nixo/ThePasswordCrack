@@ -36,7 +36,8 @@ export class MainLoop {
     const strategy = await this.domWriter.detectStrategy();
     this.log(`Write strategy: ${strategy}`);
 
-    this.engine.setZone("base", "A!111", 10, []);
+    // Start with a clean base without digits to preserve budget for Rule 5
+    this.engine.setZone("base", "A!", 10, []);
     this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
 
     this.domObserver.onRulesChanged(() => this.scheduleTick());
@@ -131,14 +132,14 @@ export class MainLoop {
         }
       }
 
-      if (passwordChanged) {
-        // Re-resolve numeric rules to account for digit pollution from new zones (e.g. leap year "2000")
-        this.resolveAllNumeric();
-        this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
-        this.log(`Attempted to type: ${this.engine.getPassword()}`);
-        await this.domObserver.waitForStability();
-        this.log(`Actual text in editor AFTER typing: ${this.domWriter.getCurrentEditorText()}`);
-      }
+      // ALWAYS re-resolve numeric rules at the end of the tick to account for 
+      // the 10-second alphabet character changes and other dynamic drift.
+      this.resolveAllNumeric();
+      
+      this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
+      this.log(`Attempted to type: ${this.engine.getPassword()}`);
+      await this.domObserver.waitForStability();
+      this.log(`Actual text in editor AFTER typing: ${this.domWriter.getCurrentEditorText()}`);
 
       const updatedRules = this.domReader.readRules();
       const broken = updatedRules.filter(r => !r.satisfied && this.knownRules.has(r.number));
@@ -247,7 +248,7 @@ export class MainLoop {
       // i.e., newLeapDigitSum <= target - (otherSum - currentLeapDigitSum)
       const maxAllowed = target - (otherSum - currentLeapDigitSum);
       
-      // Candidate leap years sorted by digit sum (ascending)
+      // Candidate leap years sorted by digit sum (ascending) to maximize Rule 5 budget
       const candidates = [
         { year: "10000", sum: 1 },  // 1+0+0+0+0 = 1, divisible by 400
         { year: "2000", sum: 2 },   // 2+0+0+0 = 2
