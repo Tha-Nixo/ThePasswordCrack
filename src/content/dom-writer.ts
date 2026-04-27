@@ -90,7 +90,11 @@ export class DOMWriter {
     const editor = this.findEditor();
     editor.focus();
     document.execCommand("selectAll", false);
-    document.execCommand("insertText", false, text);
+    if (text.includes("<b>") || text.includes("<strong>")) {
+      document.execCommand("insertHTML", false, text);
+    } else {
+      document.execCommand("insertText", false, text);
+    }
   }
 
   private writeViaInputEvent(text: string): void {

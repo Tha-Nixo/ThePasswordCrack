@@ -57,7 +57,7 @@
       var originalIncludes = String.prototype.includes;
       var isOurPassword = (str) => {
         if (typeof str !== "string") return false;
-        return originalIncludes.call(str, "Helicopter") || originalIncludes.call(str, "pepsi") || originalIncludes.call(str, "399");
+        return originalIncludes.call(str.toLowerCase(), "helicopter1!");
       };
       String.prototype.includes = function(searchString, position) {
         if (isOurPassword(this) && typeof searchString === "string" && searchString.length > 2) {

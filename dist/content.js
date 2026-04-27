@@ -146,7 +146,11 @@
           const editor = this.findEditor();
           editor.focus();
           document.execCommand("selectAll", false);
-          document.execCommand("insertText", false, text);
+          if (text.includes("<b>") || text.includes("<strong>")) {
+            document.execCommand("insertHTML", false, text);
+          } else {
+            document.execCommand("insertText", false, text);
+          }
         }
         writeViaInputEvent(text) {
           const editor = this.findEditor();
@@ -549,13 +553,13 @@
 
   // src/content/solver/elements.ts
   function scanElements(text) {
-    const lower = text.toLowerCase().replace(/[^a-z]/g, "");
+    const clean = text.replace(/[^a-zA-Z]/g, "");
     const found = [];
     let sum = 0;
     let i = 0;
-    while (i < lower.length) {
-      if (i + 1 < lower.length) {
-        const twoChar = lower.substring(i, i + 2);
+    while (i < clean.length) {
+      if (i + 1 < clean.length) {
+        const twoChar = clean.substring(i, i + 2);
         if (ELEMENTS_2[twoChar] !== void 0) {
           const an = ELEMENTS_2[twoChar];
           found.push({ symbol: twoChar, atomicNumber: an });
@@ -563,6 +567,12 @@
           i += 2;
           continue;
         }
+      }
+      const oneChar = clean[i];
+      if (ELEMENTS_1[oneChar] !== void 0) {
+        const an = ELEMENTS_1[oneChar];
+        found.push({ symbol: oneChar, atomicNumber: an });
+        sum += an;
       }
       i += 1;
     }
@@ -674,7 +684,22 @@
       { symbol: "Li", atomicNumber: 3 },
       { symbol: "He", atomicNumber: 2 }
     ];
-    const allElements = candidates;
+    const single = [
+      { symbol: "U", atomicNumber: 92 },
+      { symbol: "W", atomicNumber: 74 },
+      { symbol: "I", atomicNumber: 53 },
+      { symbol: "Y", atomicNumber: 39 },
+      { symbol: "K", atomicNumber: 19 },
+      { symbol: "S", atomicNumber: 16 },
+      { symbol: "P", atomicNumber: 15 },
+      { symbol: "F", atomicNumber: 9 },
+      { symbol: "O", atomicNumber: 8 },
+      { symbol: "N", atomicNumber: 7 },
+      { symbol: "C", atomicNumber: 6 },
+      { symbol: "B", atomicNumber: 5 },
+      { symbol: "H", atomicNumber: 1 }
+    ];
+    const allElements = [...candidates, ...single];
     const result = [];
     let remaining = targetSum;
     for (const el of allElements) {
@@ -687,115 +712,131 @@
     if (remaining !== 0) return null;
     return result.join("");
   }
-  var ELEMENTS_2;
+  var ELEMENTS_2, ELEMENTS_1;
   var init_elements = __esm({
     "src/content/solver/elements.ts"() {
       "use strict";
       ELEMENTS_2 = {
-        he: 2,
-        li: 3,
-        be: 4,
-        ne: 10,
-        na: 11,
-        mg: 12,
-        al: 13,
-        si: 14,
-        cl: 17,
-        ar: 18,
-        ca: 20,
-        sc: 21,
-        ti: 22,
-        cr: 24,
-        mn: 25,
-        fe: 26,
-        co: 27,
-        ni: 28,
-        cu: 29,
-        zn: 30,
-        ga: 31,
-        ge: 32,
-        as: 33,
-        se: 34,
-        br: 35,
-        kr: 36,
-        rb: 37,
-        sr: 38,
-        zr: 40,
-        nb: 41,
-        mo: 42,
-        tc: 43,
-        ru: 44,
-        rh: 45,
-        pd: 46,
-        ag: 47,
-        cd: 48,
-        in: 49,
-        sn: 50,
-        sb: 51,
-        te: 52,
-        xe: 54,
-        cs: 55,
-        ba: 56,
-        la: 57,
-        ce: 58,
-        pr: 59,
-        nd: 60,
-        pm: 61,
-        sm: 62,
-        eu: 63,
-        gd: 64,
-        tb: 65,
-        dy: 66,
-        ho: 67,
-        er: 68,
-        tm: 69,
-        yb: 70,
-        lu: 71,
-        hf: 72,
-        ta: 73,
-        re: 75,
-        os: 76,
-        ir: 77,
-        pt: 78,
-        au: 79,
-        hg: 80,
-        tl: 81,
-        pb: 82,
-        bi: 83,
-        po: 84,
-        at: 85,
-        rn: 86,
-        fr: 87,
-        ra: 88,
-        ac: 89,
-        th: 90,
-        pa: 91,
-        np: 93,
-        pu: 94,
-        am: 95,
-        cm: 96,
-        bk: 97,
-        cf: 98,
-        es: 99,
-        fm: 100,
-        md: 101,
-        no: 102,
-        lr: 103,
-        rf: 104,
-        db: 105,
-        sg: 106,
-        bh: 107,
-        hs: 108,
-        mt: 109,
-        ds: 110,
-        rg: 111,
-        cn: 112,
-        nh: 113,
-        fl: 114,
-        mc: 115,
-        lv: 116,
-        ts: 117,
-        og: 118
+        He: 2,
+        Li: 3,
+        Be: 4,
+        Ne: 10,
+        Na: 11,
+        Mg: 12,
+        Al: 13,
+        Si: 14,
+        Cl: 17,
+        Ar: 18,
+        Ca: 20,
+        Sc: 21,
+        Ti: 22,
+        Cr: 24,
+        Mn: 25,
+        Fe: 26,
+        Co: 27,
+        Ni: 28,
+        Cu: 29,
+        Zn: 30,
+        Ga: 31,
+        Ge: 32,
+        As: 33,
+        Se: 34,
+        Br: 35,
+        Kr: 36,
+        Rb: 37,
+        Sr: 38,
+        Zr: 40,
+        Nb: 41,
+        Mo: 42,
+        Tc: 43,
+        Ru: 44,
+        Rh: 45,
+        Pd: 46,
+        Ag: 47,
+        Cd: 48,
+        In: 49,
+        Sn: 50,
+        Sb: 51,
+        Te: 52,
+        Xe: 54,
+        Cs: 55,
+        Ba: 56,
+        La: 57,
+        Ce: 58,
+        Pr: 59,
+        Nd: 60,
+        Pm: 61,
+        Sm: 62,
+        Eu: 63,
+        Gd: 64,
+        Tb: 65,
+        Dy: 66,
+        Ho: 67,
+        Er: 68,
+        Tm: 69,
+        Yb: 70,
+        Lu: 71,
+        Hf: 72,
+        Ta: 73,
+        Re: 75,
+        Os: 76,
+        Ir: 77,
+        Pt: 78,
+        Au: 79,
+        Hg: 80,
+        Tl: 81,
+        Pb: 82,
+        Bi: 83,
+        Po: 84,
+        At: 85,
+        Rn: 86,
+        Fr: 87,
+        Ra: 88,
+        Ac: 89,
+        Th: 90,
+        Pa: 91,
+        Np: 93,
+        Pu: 94,
+        Am: 95,
+        Cm: 96,
+        Bk: 97,
+        Cf: 98,
+        Es: 99,
+        Fm: 100,
+        Md: 101,
+        No: 102,
+        Lr: 103,
+        Rf: 104,
+        Db: 105,
+        Sg: 106,
+        Bh: 107,
+        Hs: 108,
+        Mt: 109,
+        Ds: 110,
+        Rg: 111,
+        Cn: 112,
+        Nh: 113,
+        Fl: 114,
+        Mc: 115,
+        Lv: 116,
+        Ts: 117,
+        Og: 118
+      };
+      ELEMENTS_1 = {
+        H: 1,
+        B: 5,
+        C: 6,
+        N: 7,
+        O: 8,
+        F: 9,
+        P: 15,
+        S: 16,
+        K: 19,
+        V: 23,
+        Y: 39,
+        I: 53,
+        W: 74,
+        U: 92
       };
     }
   });
@@ -852,14 +893,10 @@
             const oldDigits = engine.getZone("digits")?.content || "";
             const oldRoman = engine.getZone("roman")?.content || "";
             const simulatedPw = pwWithoutElements.replace(oldDigits, digitCandidates).replace(oldRoman, romanString);
-            const { sum: currentAtomicSum, found } = scanElements(simulatedPw);
+            const { sum: currentAtomicSum } = scanElements(simulatedPw);
             const atomicGap = atomicConstraint.target - currentAtomicSum;
-            console.log(`[PWG Atomic] SimPw="${simulatedPw}" | Found: ${found.map((e) => `${e.symbol}(${e.atomicNumber})`).join("+")} = ${currentAtomicSum} | Gap=${atomicGap}`);
             if (atomicGap > 0) {
               elementsString = generateElementString(atomicGap) || "";
-              console.log(`[PWG Atomic] Adding elements: "${elementsString}" (target gap=${atomicGap})`);
-            } else if (atomicGap < 0) {
-              console.warn(`[PWG Atomic] \u26A0\uFE0F Existing elements exceed target by ${-atomicGap}! Cannot reduce.`);
             }
           }
           const totalNewLength = budget.totalLength - (engine.getZone("digits")?.content.length || 0) - (engine.getZone("roman")?.content.length || 0) + digitCandidates.length + romanString.length;
@@ -1024,8 +1061,8 @@
           this.log("Initializing...");
           const strategy = await this.domWriter.detectStrategy();
           this.log(`Write strategy: ${strategy}`);
-          this.engine.setZone("base", "Qq1!", 10, []);
-          this.domWriter.typePassword(this.engine.getPassword());
+          this.engine.setZone("base", "Helicopter1!", 10, []);
+          this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
           this.domObserver.onRulesChanged(() => this.scheduleTick());
           setInterval(() => this.scheduleTick(), 5e3);
           await this.domObserver.waitForStability();
@@ -1082,7 +1119,7 @@
             }
             if (passwordChanged) {
               this.resolveAllNumeric();
-              this.domWriter.typePassword(this.engine.getPassword());
+              this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
               this.log(`Attempted to type: ${this.engine.getPassword()}`);
               await this.domObserver.waitForStability();
               this.log(`Actual text in editor AFTER typing: ${this.domWriter.getCurrentEditorText()}`);
@@ -1092,7 +1129,7 @@
             if (broken.length > 0) {
               this.log(`Broken: ${broken.map((r) => `#${r.number}`).join(", ")}`);
               await this.conflictResolver.resolve(broken, this.knownRules, this.engine, this.budget);
-              this.domWriter.typePassword(this.engine.getPassword());
+              this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
               await this.domObserver.waitForStability();
             }
             if (this.domReader.checkWin()) {
@@ -1130,6 +1167,12 @@
         }
         async requestHumanInput(rule, prompt) {
           return this.humanHandler.requestInput(rule, prompt);
+        }
+        formatPassword(password) {
+          if (this.knownRules.has(19)) {
+            return password.replace(/([aeiouyAEIOUY])/g, "<strong>$1</strong>");
+          }
+          return password;
         }
         log(msg, level = "info") {
           const prefix = `[PWG ${(/* @__PURE__ */ new Date()).toLocaleTimeString()}]`;
@@ -1217,7 +1260,7 @@
           if (t.includes("sponsor")) {
             return {
               zone: "sponsor",
-              content: "shell",
+              content: "pepsi",
               priority: 65
             };
           }
@@ -1276,12 +1319,34 @@
 
   // src/content/handlers/pattern.ts
   function pickMonth(budget, romanTarget) {
-    return "July";
+    if (romanTarget === null) {
+      return "May";
+    }
+    const sorted = Object.entries(MONTHS_BY_ROMAN_POLLUTION).sort((a, b) => a[1] - b[1]);
+    return sorted[0][0];
   }
-  var PatternHandler;
+  var MONTHS_BY_ROMAN_POLLUTION, PatternHandler;
   var init_pattern = __esm({
     "src/content/handlers/pattern.ts"() {
       "use strict";
+      MONTHS_BY_ROMAN_POLLUTION = {
+        "January": 1,
+        // I=1
+        "February": 0,
+        "March": 1e3,
+        // M
+        "April": 1,
+        // I=1 
+        "May": 0,
+        "June": 0,
+        "July": 0,
+        "August": 0,
+        "September": 0,
+        "October": 0,
+        "November": 0,
+        "December": 600
+        // D=500, C=100
+      };
       PatternHandler = class {
         async solve(rule, engine, budgetTracker) {
           const budget = budgetTracker.compute(engine);
@@ -1346,15 +1411,11 @@
         async solveCountry(rule) {
           const country = await this.waitForCountry(3e3);
           if (country) {
-            const formatted2 = country.toLowerCase();
-            console.log(`[PWG] \u{1F5FA}\uFE0F Auto-solved GeoGuessr: ${formatted2}`);
-            return { zone: "country", content: formatted2, priority: 85 };
+            console.log(`[PWG] \u{1F5FA}\uFE0F Auto-solved GeoGuessr: ${country}`);
+            return { zone: "country", content: country, priority: 85 };
           }
           console.warn("[PWG] GeoGuessr country not available automatically, asking user.");
-          const input = await this.humanHandler.requestInput(rule, "GeoGuessr: What country is shown on the map?");
-          const formatted = input.toLowerCase();
-          console.log(`[PWG] \u{1F5FA}\uFE0F User entered country: "${input}" \u2192 lowercase: "${formatted}"`);
-          return { zone: "country", content: formatted, priority: 85 };
+          return this.fallbackToHuman(rule, "GeoGuessr: What country is shown on the map?");
         }
         async waitForCountry(timeoutMs) {
           const start = Date.now();

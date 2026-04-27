@@ -36,7 +36,7 @@ export class MainLoop {
     this.log(`Write strategy: ${strategy}`);
 
     this.engine.setZone("base", "Helicopter1!", 10, []);
-    this.domWriter.typePassword(this.engine.getPassword());
+    this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
 
     this.domObserver.onRulesChanged(() => this.scheduleTick());
 
@@ -110,7 +110,7 @@ export class MainLoop {
       if (passwordChanged) {
         // Re-resolve numeric rules to account for digit pollution from new zones (e.g. leap year "2000")
         this.resolveAllNumeric();
-        this.domWriter.typePassword(this.engine.getPassword());
+        this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
         this.log(`Attempted to type: ${this.engine.getPassword()}`);
         await this.domObserver.waitForStability();
         this.log(`Actual text in editor AFTER typing: ${this.domWriter.getCurrentEditorText()}`);
@@ -122,7 +122,7 @@ export class MainLoop {
       if (broken.length > 0) {
         this.log(`Broken: ${broken.map(r => `#${r.number}`).join(", ")}`);
         await this.conflictResolver.resolve(broken, this.knownRules, this.engine, this.budget);
-        this.domWriter.typePassword(this.engine.getPassword());
+        this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
         await this.domObserver.waitForStability();
       }
 
@@ -169,6 +169,13 @@ export class MainLoop {
 
   private async requestHumanInput(rule: ClassifiedRule, prompt: string): Promise<string> {
     return this.humanHandler.requestInput(rule, prompt);
+  }
+
+  private formatPassword(password: string): string {
+    if (this.knownRules.has(19)) {
+      return password.replace(/([aeiouyAEIOUY])/g, "<strong>$1</strong>");
+    }
+    return password;
   }
 
   private log(msg: string, level: "info" | "warn" | "error" = "info"): void {
