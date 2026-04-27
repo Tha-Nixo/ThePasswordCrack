@@ -65,7 +65,9 @@ import { Handler } from "../shared/types";
     "iamloved", "iamworthy", "iamenough",
     "january", "february", "march", "april", "may", "june",
     "july", "august", "september", "october", "november", "december",
-    "eerie", "quack"
+    "eerie", "quack",
+    "webkit", "safari", "mozilla", "chrome", "edge", "firefox", "opera",
+    "gecko", "trident", "presto", "blink", "linux", "windows", "macintosh", "android"
   ]);
 
     // Spy intercept from includes()/indexOf() calls

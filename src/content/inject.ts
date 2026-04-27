@@ -72,12 +72,16 @@ function isOurPassword(str: string): boolean {
            originalIncludes.call(lowerStr, 'may');
 }
 
-// Known strings to ignore in spy logging
+// Known strings to ignore in spy logging (browser noise, common technical strings)
 const SPY_IGNORE = new Set([
     'Helicopter', 'pepsi', 'strongpassword', 'a!111', '399', '699', 'clump', 'snore', 
-    'Chrome', 'Safari', 'Firefox', 'Opera', 'Edge', 'Mozilla', 'WebKit', 'Gecko',
-    'Mac', 'Windows', 'Android', 'iOS', 'iPhone', 'iPad', 'iPod', 'Silk', 'IEMobile',
-    'password-game/street-view', 'api/password-game', 'bt_debug', 'coolmathgames.com'
+    'Chrome', 'Safari', 'Firefox', 'Opera', 'Edge', 'Mozilla', 'WebKit', 'Gecko', 'Trident', 'Presto',
+    'chrome', 'safari', 'firefox', 'opera', 'edge', 'mozilla', 'webkit', 'gecko', 'trident', 'presto',
+    'Mac', 'Windows', 'Android', 'iOS', 'iPhone', 'iPad', 'iPod', 'Silk', 'IEMobile', 'Blink',
+    'mac', 'windows', 'android', 'ios', 'iphone', 'ipad', 'ipod', 'linux',
+    'password-game/street-view', 'api/password-game', 'bt_debug', 'coolmathgames.com',
+    'google_debug', 'googfc', 'google_console', 'dfpdeb', 'googletag', 'securepubads',
+    'native', 'code', 'function', 'object', 'string', 'number', 'boolean'
 ]);
 
 // Known affirmation/wordle/sponsor strings the game checks (not captchas)
@@ -87,7 +91,8 @@ const KNOWN_CHECKS = new Set([
     'iamloved', 'iamworthy', 'iamenough',
     'january', 'february', 'march', 'april', 'may', 'june',
     'july', 'august', 'september', 'october', 'november', 'december',
-    'eerie', 'quack'  // wordle answers get rotated, but these are today's
+    'eerie', 'quack',
+    'webkit', 'safari', 'mozilla', 'chrome' // Safety redundancy
 ]);
 
 String.prototype.includes = function(searchString: any, position?: number) {

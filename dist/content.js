@@ -2097,7 +2097,22 @@
           "november",
           "december",
           "eerie",
-          "quack"
+          "quack",
+          "webkit",
+          "safari",
+          "mozilla",
+          "chrome",
+          "edge",
+          "firefox",
+          "opera",
+          "gecko",
+          "trident",
+          "presto",
+          "blink",
+          "linux",
+          "windows",
+          "macintosh",
+          "android"
         ]);
         if (event.data.type === "PWG_SPY_INCLUDES") {
           const candidate = event.data.str;
