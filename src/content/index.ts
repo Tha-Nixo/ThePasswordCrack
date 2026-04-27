@@ -115,6 +115,7 @@ import { Handler } from "../shared/types";
         !( window as any).__pwgCaptchaAnswer &&
         candidate.length >= 3 && candidate.length <= 8 &&
         /^[a-z0-9]+$/i.test(candidate) &&
+        candidate === candidate.toLowerCase() && // CAPTCHAs are lowercase; Browser signatures like "Chrome" are not.
         !KNOWN_COUNTRIES.has(candidateLower) &&
         !KNOWN_GAME_STRINGS.has(candidateLower) &&
         !CHESS_REGEX.test(candidate) &&

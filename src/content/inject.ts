@@ -73,7 +73,12 @@ function isOurPassword(str: string): boolean {
 }
 
 // Known strings to ignore in spy logging
-const SPY_IGNORE = new Set(['Helicopter', 'pepsi', 'strongpassword', 'a!111', '399', '699', 'clump', 'snore', 'Chrome', 'Safari', 'Firefox', 'Opera']);
+const SPY_IGNORE = new Set([
+    'Helicopter', 'pepsi', 'strongpassword', 'a!111', '399', '699', 'clump', 'snore', 
+    'Chrome', 'Safari', 'Firefox', 'Opera', 'Edge', 'Mozilla', 'WebKit', 'Gecko',
+    'Mac', 'Windows', 'Android', 'iOS', 'iPhone', 'iPad', 'iPod', 'Silk', 'IEMobile',
+    'password-game/street-view', 'api/password-game', 'bt_debug', 'coolmathgames.com'
+]);
 
 // Known affirmation/wordle/sponsor strings the game checks (not captchas)
 const KNOWN_CHECKS = new Set([

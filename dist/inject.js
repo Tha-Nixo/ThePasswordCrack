@@ -61,7 +61,37 @@
         const lowerStr = str.toLowerCase();
         return originalIncludes.call(lowerStr, "a!111") || originalIncludes.call(lowerStr, "a!") || originalIncludes.call(lowerStr, "strongpassword") || originalIncludes.call(lowerStr, "february") || originalIncludes.call(lowerStr, "pepsi") || originalIncludes.call(lowerStr, "may");
       }
-      var SPY_IGNORE = /* @__PURE__ */ new Set(["Helicopter", "pepsi", "strongpassword", "a!111", "399", "699", "clump", "snore"]);
+      var SPY_IGNORE = /* @__PURE__ */ new Set([
+        "Helicopter",
+        "pepsi",
+        "strongpassword",
+        "a!111",
+        "399",
+        "699",
+        "clump",
+        "snore",
+        "Chrome",
+        "Safari",
+        "Firefox",
+        "Opera",
+        "Edge",
+        "Mozilla",
+        "WebKit",
+        "Gecko",
+        "Mac",
+        "Windows",
+        "Android",
+        "iOS",
+        "iPhone",
+        "iPad",
+        "iPod",
+        "Silk",
+        "IEMobile",
+        "password-game/street-view",
+        "api/password-game",
+        "bt_debug",
+        "coolmathgames.com"
+      ]);
       String.prototype.includes = function(searchString, position) {
         if (isOurPassword(this) && typeof searchString === "string" && searchString.length > 2) {
           if (!SPY_IGNORE.has(searchString)) {
