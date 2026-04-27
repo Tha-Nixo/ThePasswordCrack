@@ -35,7 +35,7 @@ export class MainLoop {
     const strategy = await this.domWriter.detectStrategy();
     this.log(`Write strategy: ${strategy}`);
 
-    this.engine.setZone("base", "Helicopter1!", 10, []);
+    this.engine.setZone("base", "strongpassword1A!", 10, []);
     this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
 
     this.domObserver.onRulesChanged(() => this.scheduleTick());
@@ -173,7 +173,9 @@ export class MainLoop {
 
   private formatPassword(password: string): string {
     if (this.knownRules.has(19)) {
-      return password.replace(/([aeiouyAEIOUY])/g, "<strong>$1</strong>");
+      return password.replace(/(<[^>]*>)|([aeiouyAEIOUY])/g, (match, tag, vowel) => {
+        return tag ? tag : `<strong>${vowel}</strong>`;
+      });
     }
     return password;
   }

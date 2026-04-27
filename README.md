@@ -4,7 +4,7 @@
 <h3>The ultimate automated solver for <a href="https://neal.fun/password-game/">The Password Game</a></h3>
 
 <p>
-  <img src="https://img.shields.io/badge/Rules_Solved-17%2F35-blueviolet?style=for-the-badge" alt="Rules Solved">
+  <img src="https://img.shields.io/badge/Rules_Solved-24%2F35-blueviolet?style=for-the-badge" alt="Rules Solved">
   <img src="https://img.shields.io/badge/TypeScript-100%25-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/Chrome-Manifest_V3-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Manifest V3">
   <img src="https://img.shields.io/badge/Build-esbuild-FFCF00?style=for-the-badge&logo=esbuild&logoColor=black" alt="esbuild">
@@ -36,7 +36,9 @@
 | 🗺️ **GeoGuessr Auto-Solve** | Detects the country name from the game's internal `includes()` sweep of 195 countries |
 | 📖 **Wordle Intercept** | Grabs today's Wordle answer from the API response the game itself fetches |
 | ⚗️ **Periodic Table Engine** | Full element scanner + generator to hit exact atomic number sums |
-| 🥚 **Paul Protection** | Keeps the egg emoji safe in the password at all costs |
+| 🥚 **Paul Lifecycle** | Manages Paul from egg → hatching → feeding (🐔🐛🐛🐛), auto-transitioning on rule text changes |
+| 🎬 **YouTube Database** | 3,601-video lookup table for instant duration-matched URL injection |
+| 🔤 **Smart Formatting** | HTML-aware vowel bolding that preserves URLs and tag integrity |
 | ⌨️ **ProseMirror Writer** | Escalation ladder to inject text into the game's rich-text editor |
 
 ---
@@ -52,7 +54,7 @@
 | 5 | Digits sum to 25 | `NumericSolver` | ✅ Auto |
 | 6 | Include a month | `PatternHandler` | ✅ Auto |
 | 7 | Include Roman numeral | `NumericSolver` | ✅ Auto |
-| 8 | Include a sponsor | `PatternHandler` | ✅ Auto |
+| 8 | Include a sponsor | `TextHandler` | ✅ Auto |
 | 9 | Roman numerals multiply to 35 | `NumericSolver` | ✅ Auto |
 | 10 | CAPTCHA | `HumanHandler` | ⏸️ Manual |
 | 11 | Wordle answer | `Spy → API intercept` | ✅ Auto |
@@ -63,7 +65,13 @@
 | 16 | Chess best move | `Spy → includes() hook` | ✅ Auto |
 | 17 | Chicken Paul 🥚 | `TextHandler` | ✅ Auto |
 | 18 | Atomic numbers sum to 200 | `ElementSolver` | ✅ Auto |
-| 19+ | *Work in progress...* | — | 🔜 |
+| 19 | Bold all vowels | `formatPassword()` | ✅ Auto |
+| 20 | Password on fire 🔥 | `ConflictResolver` | ✅ Auto |
+| 21 | Not strong enough 🏋️ | `TextHandler` | ✅ Auto |
+| 22 | Affirmation | `TextHandler` | ✅ Auto |
+| 23 | Feed Paul 🐛🐛🐛 | `TextHandler` | ✅ Auto |
+| 24 | YouTube video URL | `ExternalHandler + YouTube DB` | ✅ Auto |
+| 25+ | *Work in progress...* | — | 🔜 |
 
 ---
 
@@ -77,7 +85,7 @@ graph TB
 
     subgraph "🔒 Browser (ISOLATED World)"
         IDX["index.ts<br>━━━━━━━━━━━<br>Message Router<br>Country/Chess Detector"]
-        ML["main-loop.ts<br>━━━━━━━━━━━<br>Tick Engine (2s interval)<br>Rule Discovery & Dispatch"]
+        ML["main-loop.ts<br>━━━━━━━━━━━<br>Tick Engine (5s interval)<br>Rule Discovery & Dispatch"]
         
         subgraph "📖 DOM Layer"
             DR["dom-reader.ts"]
@@ -91,6 +99,7 @@ graph TB
             NH["numeric.ts"]
             EH["external.ts"]
             HH["human.ts"]
+            YT["youtube-ids.ts<br>(3,601 videos)"]
         end
         
         subgraph "⚙️ Solver Engine"
@@ -105,6 +114,7 @@ graph TB
     ML --> DR
     ML --> DW
     ML --> TH & PH & NH & EH & HH
+    EH --> YT
     NH --> BT
     NH --> EL
     TH & PH & NH & EH --> PE
@@ -113,6 +123,7 @@ graph TB
     style INJ fill:#1a1a2e,stroke:#e94560,color:#fff
     style ML fill:#16213e,stroke:#0f3460,color:#fff
     style PE fill:#0f3460,stroke:#533483,color:#fff
+    style YT fill:#ff0000,stroke:#cc0000,color:#fff
 ```
 
 ---
@@ -136,7 +147,43 @@ String.prototype.includes = function(search, position) {
 
 When the game checks if your password contains `"chile"` (GeoGuessr) or `"Qg1+"` (Chess), our spy catches it *before* the game even decides if you're right or wrong. We then feed that exact answer back into the password.
 
+> **Important:** The spy's `isOurPassword()` detection function uses `originalIncludes.call()` internally to avoid infinite recursion — calling the hooked `.includes()` from within the hook itself would stack overflow.
+
 **Zero external APIs. Zero browser automation. Just pure interception.**
+
+---
+
+## 🎬 YouTube Video Database
+
+Rule 24 requires a YouTube video of a specific duration. Instead of scraping YouTube at runtime (unreliable, slow, rate-limited), we use a pre-built database of **3,601 videos** from a community-maintained playlist.
+
+```
+youtube-ids.ts → youtubeIds[totalSeconds] → video ID
+```
+
+| Duration Requested | Lookup | Result |
+|---|---|---|
+| `14 min 39 sec` | `youtubeIds[879]` | `MELjQPlB-Co` |
+| `4 min 20 sec` | `youtubeIds[260]` | `64BymbStTYY` |
+
+The URL is injected as an **HTML anchor tag** with lowercased visible text:
+```html
+<a href="https://www.youtube.com/watch?v=MELjQPlB-Co">https://www.youtube.com/watch?v=meljqplb-co</a>
+```
+
+This is critical because video IDs often contain uppercase letters like `M`, `L`, `C`, `V`, `I` — which the game would interpret as **Roman numerals** (breaking Rule 9) or **element symbols** (breaking Rule 18). By lowercasing the visible text, the game's `innerText` parser sees no Roman pollution and no element pollution, while the `href` preserves the real URL for link validation.
+
+---
+
+## 🔬 Atomic Weight Management
+
+One of the trickiest challenges is Rule 18 (atomic numbers sum to 200). Every uppercase letter in the password potentially matches a periodic table element. The solver controls this by:
+
+1. **Low-pollution base word**: `strongpassword1A!` — all lowercase except one required `A`, contributing zero atomic weight
+2. **Lowercase month**: `february` instead of `February` — avoids `Fe` (Iron, 26) contamination
+3. **Lowercase affirmation**: `i am loved` instead of `I am loved` — avoids `I` (Iodine, 53)
+4. **Dynamic element injection**: The `ElementSolver` calculates the gap between current atomic sum and 200, then injects the minimal set of element symbols (e.g., `Gd` for Gadolinium = 64)
+5. **URL isolation**: YouTube URLs wrapped in `<a>` tags hide their uppercase letters from the element scanner
 
 ---
 
@@ -183,11 +230,12 @@ ThePasswordCrack/
 │       ├── dom-observer.ts    # MutationObserver watcher
 │       ├── conflict-resolver.ts
 │       ├── handlers/
-│       │   ├── text.ts        # Month, moon, sponsor, egg, leap year
-│       │   ├── pattern.ts     # Regex-based rules
-│       │   ├── numeric.ts     # Digit sum, Roman, Atomic solver
-│       │   ├── external.ts    # GeoGuessr, Chess, Wordle
-│       │   └── human.ts       # CAPTCHA fallback
+│       │   ├── text.ts        # Sponsor, moon, egg/Paul, strength, affirmation
+│       │   ├── pattern.ts     # Month selection (lowercase, low roman pollution)
+│       │   ├── numeric.ts     # Digit sum, Roman product, Atomic sum solver
+│       │   ├── external.ts    # Wordle, GeoGuessr, Chess, YouTube
+│       │   ├── youtube-ids.ts # 3,601-video duration→ID lookup database
+│       │   └── human.ts       # CAPTCHA fallback (popup prompt)
 │       └── solver/
 │           ├── budget.ts      # Constraint budget tracker
 │           ├── elements.ts    # Periodic table + element generator
@@ -200,26 +248,30 @@ ThePasswordCrack/
 
 ## 🔧 How the Solver Thinks
 
-Every **2 seconds**, the main loop:
+Every **5 seconds** (or on DOM mutation), the main loop:
 
 1. 📖 **Reads** all visible rules from the DOM
 2. 🏷️ **Classifies** new rules (`text`, `numeric`, `pattern`, `external`, `human`)
 3. 🧩 **Dispatches** each rule to the appropriate handler
 4. ⚖️ **Re-balances** ALL numeric constraints together (digit sum + Roman product + atomic sum)
-5. ⌨️ **Types** the final password into the editor
-6. ✅ **Verifies** the typed text matches what was intended
+5. 🔤 **Formats** the password (HTML-aware vowel bolding for Rule 19)
+6. ⌨️ **Types** the final password into the editor
+7. ✅ **Verifies** the typed text matches what was intended
+8. 🔁 **Conflict-resolves** any rules that broke from the new content
 
 The password is built from **priority-sorted zones**:
 
 ```
-┌──────────┬──────────┬─────────┬──────┬─────┬──────┬──────────┬─────────┬──────┬───────┐
-│  base    │ special  │ pattern │ digits│roman│elements│ leapyear │   egg   │ ext  │ human │
-│ "Heli-   │   "!"    │"February│ "9"  │"XXXV│  "Os" │  "2000"  │  "🥚"   │"chile│"pm363"│
-│  copter1"│          │  pepsi" │      │  "  │       │          │         │ Qg1+"│       │
-│ pri: 10  │ pri: 15  │ pri: 30 │pri:40│pr:50│ pr:60 │  pri: 50 │ pri: 70 │pr:80 │pr:100 │
-└──────────┴──────────┴─────────┴──────┴─────┴──────┴──────────┴─────────┴──────┴───────┘
+┌──────────┬──────────┬──────────┬──────┬──────┬────────┬────────┬─────────┬──────────┬───────┐
+│  base    │ periodic │ pattern  │digits│roman │elements│leapyear│  egg    │ external │ human │
+│"strong-  │  "He"    │"february"│ "29" │"XXXV"│  "Gd"  │ "2000" │"🐔🐛🐛🐛"│"russia"  │"mgw3n"│
+│password1A│          │ "pepsi"  │      │      │        │        │         │ chess/yt │       │
+│  !"      │          │          │      │      │        │        │         │          │       │
+│ pri: 10  │ pri: 15  │ pri: 30  │pr: 40│pr: 50│ pr: 60 │ pr: 50 │ pri: 70 │ pri: 80+ │pr:100 │
+└──────────┴──────────┴──────────┴──────┴──────┴────────┴────────┴─────────┴──────────┴───────┘
                               ↓ concatenated by priority ↓
-            "Helicopter1!HeFebruaryeerie9XXXV2000🌔pepsi🥚chileQg1+pm363"
+  "strongpassword1A!Hefebruaryeerie29XXXV2000Gd🌔pepsi🐔🐛🐛🐛🏋️‍♂️🏋️‍♂️🏋️‍♂️i am loved
+   <a href="...youtube...">...youtube...</a> russiaRg8+mgw3n"
 ```
 
 ---
@@ -227,8 +279,9 @@ The password is built from **priority-sorted zones**:
 ## ⚠️ Known Limitations
 
 - **CAPTCHA (Rule 10)** — Requires human input. The extension pauses and prompts you via the popup.
-- **Rules 19+** — Still being implemented. The architecture supports adding new handlers easily.
+- **Rules 25+** — Still being implemented. The architecture supports adding new handlers easily.
 - **Element Detection** — Uses a greedy left-to-right scanner (same as the game). Edge cases with overlapping symbols may occur.
+- **YouTube Database** — Covers durations from 1 second to 3,601 seconds (~60 minutes). Videos outside this range will fall back to manual input.
 
 ---
 
@@ -250,7 +303,7 @@ MIT — Do whatever you want with it.
 
 <div align="center">
   <br>
-  <i>Built with 🧠, ☕, and an unreasonable amount of spite towards Rule 18.</i>
+  <i>Built with 🧠, ☕, and an unreasonable amount of spite towards Rules 18 and 24.</i>
   <br><br>
   <sub>Disclaimer: Educational project exploring DOM manipulation, runtime interception, and constraint solving.<br>All rights for The Password Game belong to <a href="https://nealagarwal.me/">Neal Agarwal</a>.</sub>
 </div>

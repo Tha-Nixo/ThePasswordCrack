@@ -38,6 +38,14 @@ export class TextHandler implements Handler {
       };
     }
 
+    if (t.includes("paul") && (t.includes("feed") || t.includes("eats") || t.includes("🐛"))) {
+      return {
+        zone: "egg",
+        content: "🐔🐛🐛🐛",
+        priority: 70
+      };
+    }
+
     if (t.includes("chicken") || t.includes("paul") || t.includes("hatched") || t.includes("🥚")) {
       return {
         zone: "egg",
@@ -46,6 +54,26 @@ export class TextHandler implements Handler {
       };
     }
     
+    if (t.includes("strong")) {
+      return {
+        zone: "strong",
+        content: "🏋️‍♂️🏋️‍♂️🏋️‍♂️",
+        priority: 75
+      };
+    }
+
+    if (t.includes("affirmation") || t.includes("loved") || t.includes("worthy") || t.includes("enough")) {
+      return {
+        zone: "affirmation",
+        content: "i am loved",
+        priority: 76
+      };
+    }
+
+
+    
+
+
     return {
       zone: "text",
       content: "", // placeholder, engine initialization handles the default base nicely

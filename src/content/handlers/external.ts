@@ -2,6 +2,7 @@ import { ClassifiedRule, Handler, ZoneUpdate } from "../../shared/types";
 import { PasswordEngine } from "../password-engine";
 import { BudgetTracker } from "../solver/budget";
 import { HumanHandler } from "./human";
+import { youtubeIds } from "./youtube-ids";
 
 export class ExternalHandler implements Handler {
   constructor(private humanHandler: HumanHandler) {}
@@ -104,11 +105,23 @@ export class ExternalHandler implements Handler {
   }
 
   async solveYouTube(rule: ClassifiedRule, engine: PasswordEngine): Promise<ZoneUpdate> {
-    const durationMatch = rule.text.match(/(\d+)\s*minutes?\s*(?:and\s*)?(\d+)\s*seconds?/i);
-    if (durationMatch) {
-      const mins = parseInt(durationMatch[1]);
-      const secs = parseInt(durationMatch[2]);
-      const formatted = `${mins}:${secs.toString().padStart(2, "0")}`;
+    let totalSeconds = 0;
+    const minMatch = rule.text.match(/(\d+)\s*minute/i);
+    if (minMatch) {
+      totalSeconds += parseInt(minMatch[1], 10) * 60;
+    }
+    const secMatch = rule.text.match(/(\d+)\s*second/i);
+    if (secMatch) {
+      totalSeconds += parseInt(secMatch[1], 10);
+    }
+    
+    if (totalSeconds > 0 && youtubeIds[totalSeconds]) {
+      const url = "https://www.youtube.com/watch?v=" + youtubeIds[totalSeconds];
+      return {
+        zone: "youtube",
+        content: ` <a href="${url}">${url.toLowerCase()}</a> `,
+        priority: 80
+      };
     }
 
     return this.fallbackToHuman(rule,

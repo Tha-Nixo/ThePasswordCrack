@@ -55,10 +55,11 @@
         return send.apply(this, arguments);
       };
       var originalIncludes = String.prototype.includes;
-      var isOurPassword = (str) => {
-        if (typeof str !== "string") return false;
-        return originalIncludes.call(str.toLowerCase(), "helicopter1!");
-      };
+      function isOurPassword(str) {
+        if (!str || typeof str !== "string" || str.length < 5) return false;
+        const lowerStr = str.toLowerCase();
+        return originalIncludes.call(lowerStr, "strongpassword") || originalIncludes.call(lowerStr, "may");
+      }
       String.prototype.includes = function(searchString, position) {
         if (isOurPassword(this) && typeof searchString === "string" && searchString.length > 2) {
           if (!["Helicopter", "pepsi", "399", "clump", "snore"].includes(searchString)) {

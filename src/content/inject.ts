@@ -52,15 +52,17 @@ XHR.send = function(postData?: Document | XMLHttpRequestBodyInit | null) {
 // ==========================================
 // THE PASSWORD SPY
 // We hook string comparison methods to catch what the game is comparing our password against!
-// Since we know our password contains "Helicopter" or "pepsi", we only log when 'this' is our password.
+// Since we know our password contains "strongpassword" or "may", we only log when 'this' is our password.
 // ==========================================
 
 const originalIncludes = String.prototype.includes;
 
-const isOurPassword = (str: string | undefined | null) => {
-    if (typeof str !== 'string') return false;
-    return originalIncludes.call(str.toLowerCase(), 'helicopter1!');
-};
+function isOurPassword(str: string): boolean {
+    if (!str || typeof str !== 'string' || str.length < 5) return false;
+    
+    const lowerStr = str.toLowerCase();
+    return originalIncludes.call(lowerStr, 'strongpassword') || originalIncludes.call(lowerStr, 'may');
+}
 
 String.prototype.includes = function(searchString: any, position?: number) {
     if (isOurPassword(this as unknown as string) && typeof searchString === 'string' && searchString.length > 2) {

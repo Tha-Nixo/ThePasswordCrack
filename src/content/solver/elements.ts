@@ -192,7 +192,12 @@ export function generateElementString(targetSum: number): string | null {
     { symbol: "H", atomicNumber: 1 },
   ];
 
-  const allElements = [...candidates, ...single];
+  // Filter out any elements that start with a Roman Numeral character (I, V, X, L, C, D, M)
+  // because the game will parse them as Roman numerals and ruin the Roman Numeral product constraint (Rule 9).
+  const allElements = [...candidates, ...single].filter(
+    (el) => !/^[IVXLCDM]/.test(el.symbol)
+  );
+  
   const result: string[] = [];
   let remaining = targetSum;
 

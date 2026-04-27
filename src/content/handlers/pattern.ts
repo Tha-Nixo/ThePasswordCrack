@@ -19,12 +19,12 @@ const MONTHS_BY_ROMAN_POLLUTION: Record<string, number> = {
 
 export function pickMonth(budget: PasswordBudget, romanTarget: number | null): string {
   if (romanTarget === null) {
-    return "May";
+    return "may";
   }
 
   const sorted = Object.entries(MONTHS_BY_ROMAN_POLLUTION)
     .sort((a, b) => a[1] - b[1]);
-  return sorted[0][0]; 
+  return sorted[0][0].toLowerCase(); 
 }
 
 export class PatternHandler implements Handler {
