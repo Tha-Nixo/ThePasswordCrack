@@ -526,10 +526,10 @@
           if (/digits/i.test(t) && /add\s+up/i.test(t) || /roman/i.test(t) || /atomic/i.test(t)) {
             return "numeric";
           }
-          if (/wordle/i.test(t) || /youtube/i.test(t) || /country/i.test(t)) {
+          if (/wordle/i.test(t) || /youtube/i.test(t) || /country/i.test(t) || /chess/i.test(t)) {
             return "external";
           }
-          if (/captcha/i.test(t) || /chess/i.test(t) || /maps/i.test(t) || /geoguessr/i.test(t)) {
+          if (/captcha/i.test(t) || /maps/i.test(t) || /geoguessr/i.test(t)) {
             return "human";
           }
           if (/month/i.test(t)) {
@@ -543,6 +543,259 @@
           }
           return "text";
         }
+      };
+    }
+  });
+
+  // src/content/solver/elements.ts
+  function scanElements(text) {
+    const lower = text.toLowerCase().replace(/[^a-z]/g, "");
+    const found = [];
+    let sum = 0;
+    let i = 0;
+    while (i < lower.length) {
+      if (i + 1 < lower.length) {
+        const twoChar = lower.substring(i, i + 2);
+        if (ELEMENTS_2[twoChar] !== void 0) {
+          const an = ELEMENTS_2[twoChar];
+          found.push({ symbol: twoChar, atomicNumber: an });
+          sum += an;
+          i += 2;
+          continue;
+        }
+      }
+      i += 1;
+    }
+    return { sum, found };
+  }
+  function generateElementString(targetSum) {
+    if (targetSum <= 0) return "";
+    const candidates = [
+      { symbol: "Og", atomicNumber: 118 },
+      { symbol: "Ts", atomicNumber: 117 },
+      { symbol: "Lv", atomicNumber: 116 },
+      { symbol: "Mc", atomicNumber: 115 },
+      { symbol: "Fl", atomicNumber: 114 },
+      { symbol: "Nh", atomicNumber: 113 },
+      { symbol: "Cn", atomicNumber: 112 },
+      { symbol: "Rg", atomicNumber: 111 },
+      { symbol: "Ds", atomicNumber: 110 },
+      { symbol: "Mt", atomicNumber: 109 },
+      { symbol: "Hs", atomicNumber: 108 },
+      { symbol: "Bh", atomicNumber: 107 },
+      { symbol: "Sg", atomicNumber: 106 },
+      { symbol: "Db", atomicNumber: 105 },
+      { symbol: "Rf", atomicNumber: 104 },
+      { symbol: "Lr", atomicNumber: 103 },
+      { symbol: "No", atomicNumber: 102 },
+      { symbol: "Md", atomicNumber: 101 },
+      { symbol: "Fm", atomicNumber: 100 },
+      { symbol: "Es", atomicNumber: 99 },
+      { symbol: "Cf", atomicNumber: 98 },
+      { symbol: "Bk", atomicNumber: 97 },
+      { symbol: "Cm", atomicNumber: 96 },
+      { symbol: "Am", atomicNumber: 95 },
+      { symbol: "Pu", atomicNumber: 94 },
+      { symbol: "Np", atomicNumber: 93 },
+      { symbol: "Th", atomicNumber: 90 },
+      { symbol: "Ac", atomicNumber: 89 },
+      { symbol: "Ra", atomicNumber: 88 },
+      { symbol: "Fr", atomicNumber: 87 },
+      { symbol: "Rn", atomicNumber: 86 },
+      { symbol: "At", atomicNumber: 85 },
+      { symbol: "Po", atomicNumber: 84 },
+      { symbol: "Bi", atomicNumber: 83 },
+      { symbol: "Pb", atomicNumber: 82 },
+      { symbol: "Tl", atomicNumber: 81 },
+      { symbol: "Hg", atomicNumber: 80 },
+      { symbol: "Au", atomicNumber: 79 },
+      { symbol: "Pt", atomicNumber: 78 },
+      { symbol: "Ir", atomicNumber: 77 },
+      { symbol: "Os", atomicNumber: 76 },
+      { symbol: "Re", atomicNumber: 75 },
+      { symbol: "Ta", atomicNumber: 73 },
+      { symbol: "Hf", atomicNumber: 72 },
+      { symbol: "Lu", atomicNumber: 71 },
+      { symbol: "Yb", atomicNumber: 70 },
+      { symbol: "Tm", atomicNumber: 69 },
+      { symbol: "Er", atomicNumber: 68 },
+      { symbol: "Ho", atomicNumber: 67 },
+      { symbol: "Dy", atomicNumber: 66 },
+      { symbol: "Tb", atomicNumber: 65 },
+      { symbol: "Gd", atomicNumber: 64 },
+      { symbol: "Eu", atomicNumber: 63 },
+      { symbol: "Sm", atomicNumber: 62 },
+      { symbol: "Nd", atomicNumber: 60 },
+      { symbol: "Pr", atomicNumber: 59 },
+      { symbol: "Ce", atomicNumber: 58 },
+      { symbol: "La", atomicNumber: 57 },
+      { symbol: "Ba", atomicNumber: 56 },
+      { symbol: "Cs", atomicNumber: 55 },
+      { symbol: "Xe", atomicNumber: 54 },
+      { symbol: "Te", atomicNumber: 52 },
+      { symbol: "Sb", atomicNumber: 51 },
+      { symbol: "Sn", atomicNumber: 50 },
+      { symbol: "In", atomicNumber: 49 },
+      { symbol: "Cd", atomicNumber: 48 },
+      { symbol: "Ag", atomicNumber: 47 },
+      { symbol: "Pd", atomicNumber: 46 },
+      { symbol: "Rh", atomicNumber: 45 },
+      { symbol: "Ru", atomicNumber: 44 },
+      { symbol: "Tc", atomicNumber: 43 },
+      { symbol: "Mo", atomicNumber: 42 },
+      { symbol: "Nb", atomicNumber: 41 },
+      { symbol: "Zr", atomicNumber: 40 },
+      { symbol: "Sr", atomicNumber: 38 },
+      { symbol: "Rb", atomicNumber: 37 },
+      { symbol: "Kr", atomicNumber: 36 },
+      { symbol: "Br", atomicNumber: 35 },
+      { symbol: "Se", atomicNumber: 34 },
+      { symbol: "As", atomicNumber: 33 },
+      { symbol: "Ge", atomicNumber: 32 },
+      { symbol: "Ga", atomicNumber: 31 },
+      { symbol: "Zn", atomicNumber: 30 },
+      { symbol: "Cu", atomicNumber: 29 },
+      { symbol: "Ni", atomicNumber: 28 },
+      { symbol: "Co", atomicNumber: 27 },
+      { symbol: "Fe", atomicNumber: 26 },
+      { symbol: "Mn", atomicNumber: 25 },
+      { symbol: "Cr", atomicNumber: 24 },
+      { symbol: "Ti", atomicNumber: 22 },
+      { symbol: "Sc", atomicNumber: 21 },
+      { symbol: "Ca", atomicNumber: 20 },
+      { symbol: "Ar", atomicNumber: 18 },
+      { symbol: "Cl", atomicNumber: 17 },
+      { symbol: "Si", atomicNumber: 14 },
+      { symbol: "Al", atomicNumber: 13 },
+      { symbol: "Mg", atomicNumber: 12 },
+      { symbol: "Na", atomicNumber: 11 },
+      { symbol: "Ne", atomicNumber: 10 },
+      { symbol: "Be", atomicNumber: 4 },
+      { symbol: "Li", atomicNumber: 3 },
+      { symbol: "He", atomicNumber: 2 }
+    ];
+    const allElements = candidates;
+    const result = [];
+    let remaining = targetSum;
+    for (const el of allElements) {
+      while (remaining >= el.atomicNumber) {
+        result.push(el.symbol);
+        remaining -= el.atomicNumber;
+      }
+      if (remaining === 0) break;
+    }
+    if (remaining !== 0) return null;
+    return result.join("");
+  }
+  var ELEMENTS_2;
+  var init_elements = __esm({
+    "src/content/solver/elements.ts"() {
+      "use strict";
+      ELEMENTS_2 = {
+        he: 2,
+        li: 3,
+        be: 4,
+        ne: 10,
+        na: 11,
+        mg: 12,
+        al: 13,
+        si: 14,
+        cl: 17,
+        ar: 18,
+        ca: 20,
+        sc: 21,
+        ti: 22,
+        cr: 24,
+        mn: 25,
+        fe: 26,
+        co: 27,
+        ni: 28,
+        cu: 29,
+        zn: 30,
+        ga: 31,
+        ge: 32,
+        as: 33,
+        se: 34,
+        br: 35,
+        kr: 36,
+        rb: 37,
+        sr: 38,
+        zr: 40,
+        nb: 41,
+        mo: 42,
+        tc: 43,
+        ru: 44,
+        rh: 45,
+        pd: 46,
+        ag: 47,
+        cd: 48,
+        in: 49,
+        sn: 50,
+        sb: 51,
+        te: 52,
+        xe: 54,
+        cs: 55,
+        ba: 56,
+        la: 57,
+        ce: 58,
+        pr: 59,
+        nd: 60,
+        pm: 61,
+        sm: 62,
+        eu: 63,
+        gd: 64,
+        tb: 65,
+        dy: 66,
+        ho: 67,
+        er: 68,
+        tm: 69,
+        yb: 70,
+        lu: 71,
+        hf: 72,
+        ta: 73,
+        re: 75,
+        os: 76,
+        ir: 77,
+        pt: 78,
+        au: 79,
+        hg: 80,
+        tl: 81,
+        pb: 82,
+        bi: 83,
+        po: 84,
+        at: 85,
+        rn: 86,
+        fr: 87,
+        ra: 88,
+        ac: 89,
+        th: 90,
+        pa: 91,
+        np: 93,
+        pu: 94,
+        am: 95,
+        cm: 96,
+        bk: 97,
+        cf: 98,
+        es: 99,
+        fm: 100,
+        md: 101,
+        no: 102,
+        lr: 103,
+        rf: 104,
+        db: 105,
+        sg: 106,
+        bh: 107,
+        hs: 108,
+        mt: 109,
+        ds: 110,
+        rg: 111,
+        cn: 112,
+        nh: 113,
+        fl: 114,
+        mc: 115,
+        lv: 116,
+        ts: 117,
+        og: 118
       };
     }
   });
@@ -567,7 +820,7 @@
     }
     if (/atomic/i.test(t) && /add\s+up/i.test(t)) {
       const match = t.match(/add\s+up\s+to\s*(\d+)/i);
-      return { type: "sum", target: match ? parseInt(match[1]) : 0 };
+      return { type: "atomic_sum", target: match ? parseInt(match[1]) : 0 };
     }
     return { type: "ratio", maxRatio: 0.3 };
   }
@@ -576,6 +829,7 @@
     "src/content/handlers/numeric.ts"() {
       "use strict";
       init_unicode();
+      init_elements();
       NumericSolver = class {
         solveAll(constraints, engine, budget) {
           const digitSumConstraint = constraints.find((c) => c.type === "sum" && c.target !== void 0);
@@ -591,6 +845,23 @@
               romanString = "V";
             }
           }
+          const atomicConstraint = constraints.find((c) => c.type === "atomic_sum" && c.target !== void 0);
+          let elementsString = "";
+          if (atomicConstraint) {
+            const pwWithoutElements = engine.getPasswordExcludingZone("elements");
+            const oldDigits = engine.getZone("digits")?.content || "";
+            const oldRoman = engine.getZone("roman")?.content || "";
+            const simulatedPw = pwWithoutElements.replace(oldDigits, digitCandidates).replace(oldRoman, romanString);
+            const { sum: currentAtomicSum, found } = scanElements(simulatedPw);
+            const atomicGap = atomicConstraint.target - currentAtomicSum;
+            console.log(`[PWG Atomic] SimPw="${simulatedPw}" | Found: ${found.map((e) => `${e.symbol}(${e.atomicNumber})`).join("+")} = ${currentAtomicSum} | Gap=${atomicGap}`);
+            if (atomicGap > 0) {
+              elementsString = generateElementString(atomicGap) || "";
+              console.log(`[PWG Atomic] Adding elements: "${elementsString}" (target gap=${atomicGap})`);
+            } else if (atomicGap < 0) {
+              console.warn(`[PWG Atomic] \u26A0\uFE0F Existing elements exceed target by ${-atomicGap}! Cannot reduce.`);
+            }
+          }
           const totalNewLength = budget.totalLength - (engine.getZone("digits")?.content.length || 0) - (engine.getZone("roman")?.content.length || 0) + digitCandidates.length + romanString.length;
           const newDigitCount = budget.digitCount - digitCount(engine.getZone("digits")?.content || "") + digitCount(digitCandidates);
           const digitPercentConstraint = constraints.find((c) => c.type === "ratio");
@@ -600,8 +871,7 @@
           return {
             digits: digitCandidates,
             roman: romanString,
-            elements: ""
-            // Placeholder
+            elements: elementsString
           };
         }
         solveWithLengthConstraint(constraints, budget, engine) {
@@ -754,7 +1024,7 @@
           this.log("Initializing...");
           const strategy = await this.domWriter.detectStrategy();
           this.log(`Write strategy: ${strategy}`);
-          this.engine.setZone("base", "Helicopter1!", 10, []);
+          this.engine.setZone("base", "Qq1!", 10, []);
           this.domWriter.typePassword(this.engine.getPassword());
           this.domObserver.onRulesChanged(() => this.scheduleTick());
           setInterval(() => this.scheduleTick(), 5e3);
@@ -811,6 +1081,7 @@
               }
             }
             if (passwordChanged) {
+              this.resolveAllNumeric();
               this.domWriter.typePassword(this.engine.getPassword());
               this.log(`Attempted to type: ${this.engine.getPassword()}`);
               await this.domObserver.waitForStability();
@@ -848,7 +1119,7 @@
             currentBudget
           );
           if (solution) {
-            this.log(`Solution applied: digits=${solution.digits}, roman=${solution.roman}`);
+            this.log(`Solution applied: digits=${solution.digits}, roman=${solution.roman}, elements=${solution.elements}`);
             if (solution.digits !== void 0) this.engine.setZone("digits", solution.digits, 40, []);
             if (solution.roman !== void 0) this.engine.setZone("roman", solution.roman, 50, []);
             if (solution.elements !== void 0) this.engine.setZone("elements", solution.elements, 60, []);
@@ -946,7 +1217,7 @@
           if (t.includes("sponsor")) {
             return {
               zone: "sponsor",
-              content: "pepsi",
+              content: "shell",
               priority: 65
             };
           }
@@ -962,6 +1233,20 @@
               zone: "periodic",
               content: "He",
               priority: 15
+            };
+          }
+          if (t.includes("leap year")) {
+            return {
+              zone: "leapyear",
+              content: "2000",
+              priority: 50
+            };
+          }
+          if (t.includes("chicken") || t.includes("paul") || t.includes("hatched") || t.includes("\u{1F95A}")) {
+            return {
+              zone: "egg",
+              content: "\u{1F95A}",
+              priority: 70
             };
           }
           return {
@@ -991,34 +1276,12 @@
 
   // src/content/handlers/pattern.ts
   function pickMonth(budget, romanTarget) {
-    if (romanTarget === null) {
-      return "May";
-    }
-    const sorted = Object.entries(MONTHS_BY_ROMAN_POLLUTION).sort((a, b) => a[1] - b[1]);
-    return sorted[0][0];
+    return "July";
   }
-  var MONTHS_BY_ROMAN_POLLUTION, PatternHandler;
+  var PatternHandler;
   var init_pattern = __esm({
     "src/content/handlers/pattern.ts"() {
       "use strict";
-      MONTHS_BY_ROMAN_POLLUTION = {
-        "January": 1,
-        // I=1
-        "February": 0,
-        "March": 1e3,
-        // M
-        "April": 1,
-        // I=1 
-        "May": 0,
-        "June": 0,
-        "July": 0,
-        "August": 0,
-        "September": 0,
-        "October": 0,
-        "November": 0,
-        "December": 600
-        // D=500, C=100
-      };
       PatternHandler = class {
         async solve(rule, engine, budgetTracker) {
           const budget = budgetTracker.compute(engine);
@@ -1075,16 +1338,54 @@
           if (rule.text.toLowerCase().includes("country")) {
             return this.solveCountry(rule);
           }
+          if (rule.text.toLowerCase().includes("chess")) {
+            return this.solveChess(rule);
+          }
           return this.fallbackToHuman(rule, "External rule requiring manual input:");
         }
         async solveCountry(rule) {
-          const country = window.__pwgCountryAnswer;
+          const country = await this.waitForCountry(3e3);
           if (country) {
-            console.log(`[PWG] \u{1F5FA}\uFE0F Auto-solved GeoGuessr: ${country}`);
-            return { zone: "country", content: country, priority: 85 };
+            const formatted2 = country.toLowerCase();
+            console.log(`[PWG] \u{1F5FA}\uFE0F Auto-solved GeoGuessr: ${formatted2}`);
+            return { zone: "country", content: formatted2, priority: 85 };
           }
           console.warn("[PWG] GeoGuessr country not available automatically, asking user.");
-          return this.fallbackToHuman(rule, "GeoGuessr: What country is shown on the map?");
+          const input = await this.humanHandler.requestInput(rule, "GeoGuessr: What country is shown on the map?");
+          const formatted = input.toLowerCase();
+          console.log(`[PWG] \u{1F5FA}\uFE0F User entered country: "${input}" \u2192 lowercase: "${formatted}"`);
+          return { zone: "country", content: formatted, priority: 85 };
+        }
+        async waitForCountry(timeoutMs) {
+          const start = Date.now();
+          while (Date.now() - start < timeoutMs) {
+            const country = window.__pwgCountryAnswer;
+            if (country && typeof country === "string" && country.length > 2 && !/[\\^$.*+?()[\]{}|]/.test(country)) {
+              return country;
+            }
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          return null;
+        }
+        async solveChess(rule) {
+          const move = await this.waitForChessMove(5e3);
+          if (move) {
+            console.log(`[PWG] \u265F\uFE0F Auto-solved chess: ${move}`);
+            return { zone: "chess", content: move, priority: 86 };
+          }
+          console.warn("[PWG] Chess move not available automatically, asking user.");
+          return this.fallbackToHuman(rule, "Chess: What is the best move in algebraic notation?");
+        }
+        async waitForChessMove(timeoutMs) {
+          const start = Date.now();
+          while (Date.now() - start < timeoutMs) {
+            const move = window.__pwgChessAnswer;
+            if (move && typeof move === "string" && move.length >= 2) {
+              return move;
+            }
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          return null;
         }
         async solveWordle(rule, engine) {
           const answer = await this.tryWithTimeout(async () => {
@@ -1169,16 +1470,228 @@
       init_pattern();
       init_time();
       init_external();
+      var KNOWN_COUNTRIES = /* @__PURE__ */ new Set([
+        "afghanistan",
+        "albania",
+        "algeria",
+        "andorra",
+        "angola",
+        "antigua",
+        "argentina",
+        "armenia",
+        "australia",
+        "austria",
+        "azerbaijan",
+        "bahamas",
+        "bahrain",
+        "bangladesh",
+        "barbados",
+        "belarus",
+        "belgium",
+        "belize",
+        "benin",
+        "bhutan",
+        "bolivia",
+        "bosnia",
+        "botswana",
+        "brazil",
+        "brunei",
+        "bulgaria",
+        "burkina",
+        "burundi",
+        "cambodia",
+        "cameroon",
+        "canada",
+        "capeverde",
+        "chad",
+        "chile",
+        "china",
+        "colombia",
+        "comoros",
+        "congo",
+        "costarica",
+        "croatia",
+        "cuba",
+        "cyprus",
+        "czechrepublic",
+        "denmark",
+        "djibouti",
+        "dominica",
+        "dominicanrepublic",
+        "easttimor",
+        "ecuador",
+        "egypt",
+        "elsalvador",
+        "equatorialguinea",
+        "eritrea",
+        "estonia",
+        "ethiopia",
+        "fiji",
+        "finland",
+        "france",
+        "gabon",
+        "gambia",
+        "georgia",
+        "germany",
+        "ghana",
+        "greece",
+        "grenada",
+        "guatemala",
+        "guinea",
+        "guinea-bissau",
+        "guyana",
+        "haiti",
+        "honduras",
+        "hungary",
+        "iceland",
+        "india",
+        "indonesia",
+        "iran",
+        "iraq",
+        "ireland",
+        "israel",
+        "italy",
+        "ivorycoast",
+        "jamaica",
+        "japan",
+        "jordan",
+        "kazakhstan",
+        "kenya",
+        "kiribati",
+        "koreanorth",
+        "koreasouth",
+        "kosovo",
+        "kuwait",
+        "kyrgyzstan",
+        "laos",
+        "latvia",
+        "lebanon",
+        "lesotho",
+        "liberia",
+        "libya",
+        "liechtenstein",
+        "lithuania",
+        "luxembourg",
+        "macedonia",
+        "madagascar",
+        "malawi",
+        "malaysia",
+        "maldives",
+        "mali",
+        "malta",
+        "marshallislands",
+        "mauritania",
+        "mauritius",
+        "mexico",
+        "micronesia",
+        "moldova",
+        "monaco",
+        "mongolia",
+        "montenegro",
+        "morocco",
+        "mozambique",
+        "myanmar",
+        "namibia",
+        "nauru",
+        "nepal",
+        "netherlands",
+        "newzealand",
+        "nicaragua",
+        "niger",
+        "nigeria",
+        "norway",
+        "oman",
+        "pakistan",
+        "palau",
+        "panama",
+        "papuanewguinea",
+        "paraguay",
+        "peru",
+        "philippines",
+        "poland",
+        "portugal",
+        "qatar",
+        "romania",
+        "russia",
+        "rwanda",
+        "stlucia",
+        "samoa",
+        "sanmarino",
+        "saudiarabia",
+        "senegal",
+        "serbia",
+        "seychelles",
+        "sierraleone",
+        "singapore",
+        "slovakia",
+        "slovenia",
+        "solomonislands",
+        "somalia",
+        "southafrica",
+        "southsudan",
+        "spain",
+        "srilanka",
+        "sudan",
+        "suriname",
+        "swaziland",
+        "sweden",
+        "switzerland",
+        "syria",
+        "taiwan",
+        "tajikistan",
+        "tanzania",
+        "thailand",
+        "togo",
+        "tonga",
+        "trinidad&tobago",
+        "tunisia",
+        "turkey",
+        "turkmenistan",
+        "tuvalu",
+        "uganda",
+        "ukraine",
+        "unitedarabemirates",
+        "unitedkingdom",
+        "america",
+        "uruguay",
+        "uzbekistan",
+        "vanuatu",
+        "vaticancity",
+        "venezuela",
+        "vietnam",
+        "yemen",
+        "zambia",
+        "zimbabwe",
+        "england",
+        "unitedstates",
+        "britain"
+      ]);
+      var countryBatchSeen = false;
       window.addEventListener("message", (event) => {
         if (event.source !== window || !event.data) return;
         if (event.data.type === "PWG_GEO_HACK") {
           window.__pwgCountryAnswer = event.data.country;
-          console.log("[PWG] \u{1F5FA}\uFE0F GeoGuessr intercepted! Setting country:", event.data.country);
+          console.log("[PWG] \u{1F5FA}\uFE0F GeoGuessr intercepted via API! Country:", event.data.country);
         }
-        if (event.data.type === "PWG_SPY_CANDIDATE") {
-          console.log("[PWG] \u{1F575}\uFE0F Spy caught potential string:", event.data.str);
-          if (!window.__pwgCountryAnswer) {
-            window.__pwgCountryAnswer = event.data.str;
+        if (event.data.type === "PWG_SPY_INCLUDES") {
+          const candidate = event.data.str;
+          const CHESS_REGEX = /^[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?$/;
+          const CASTLING_REGEX = /^O-O(?:-O)?[+#]?$/;
+          if (!window.__pwgChessAnswer && (CHESS_REGEX.test(candidate) || CASTLING_REGEX.test(candidate))) {
+            if (!KNOWN_COUNTRIES.has(candidate.toLowerCase())) {
+              window.__pwgChessAnswer = candidate;
+              console.log("[PWG] \u265F\uFE0F Chess move detected from spy:", candidate);
+            }
+          }
+          if (KNOWN_COUNTRIES.has(candidate)) {
+            if (!countryBatchSeen) {
+              countryBatchSeen = true;
+              window.__pwgCountryAnswer = candidate;
+              console.log("[PWG] \u{1F5FA}\uFE0F Country detected from spy (first match):", candidate);
+              setTimeout(() => {
+                countryBatchSeen = false;
+              }, 3e3);
+            }
           }
         }
       });

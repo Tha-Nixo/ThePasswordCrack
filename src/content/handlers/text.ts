@@ -29,6 +29,22 @@ export class TextHandler implements Handler {
         priority: 15
       };
     }
+
+    if (t.includes("leap year")) {
+      return {
+        zone: "leapyear",
+        content: "2000",
+        priority: 50
+      };
+    }
+
+    if (t.includes("chicken") || t.includes("paul") || t.includes("hatched") || t.includes("🥚")) {
+      return {
+        zone: "egg",
+        content: "🥚",
+        priority: 70
+      };
+    }
     
     return {
       zone: "text",

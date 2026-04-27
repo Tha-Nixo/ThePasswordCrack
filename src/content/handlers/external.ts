@@ -16,12 +16,16 @@ export class ExternalHandler implements Handler {
     if (rule.text.toLowerCase().includes("country")) {
       return this.solveCountry(rule);
     }
+    if (rule.text.toLowerCase().includes("chess")) {
+      return this.solveChess(rule);
+    }
     
     return this.fallbackToHuman(rule, "External rule requiring manual input:");
   }
 
   async solveCountry(rule: ClassifiedRule): Promise<ZoneUpdate> {
-    const country = (window as any).__pwgCountryAnswer;
+    // Wait up to 3 seconds for the spy to capture the country from includes() checks
+    const country = await this.waitForCountry(3000);
     if (country) {
       console.log(`[PWG] 🗺️ Auto-solved GeoGuessr: ${country}`);
       return { zone: "country", content: country, priority: 85 };
@@ -29,6 +33,42 @@ export class ExternalHandler implements Handler {
     
     console.warn("[PWG] GeoGuessr country not available automatically, asking user.");
     return this.fallbackToHuman(rule, "GeoGuessr: What country is shown on the map?");
+  }
+
+  private async waitForCountry(timeoutMs: number): Promise<string | null> {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const country = (window as any).__pwgCountryAnswer;
+      if (country && typeof country === 'string' && country.length > 2 && !/[\\^$.*+?()[\]{}|]/.test(country)) {
+        return country;
+      }
+      await new Promise(r => setTimeout(r, 200));
+    }
+    return null;
+  }
+
+  async solveChess(rule: ClassifiedRule): Promise<ZoneUpdate> {
+    // Wait up to 5 seconds for the spy to capture the chess move from includes() checks
+    const move = await this.waitForChessMove(5000);
+    if (move) {
+      console.log(`[PWG] ♟️ Auto-solved chess: ${move}`);
+      return { zone: "chess", content: move, priority: 86 };
+    }
+    
+    console.warn("[PWG] Chess move not available automatically, asking user.");
+    return this.fallbackToHuman(rule, "Chess: What is the best move in algebraic notation?");
+  }
+
+  private async waitForChessMove(timeoutMs: number): Promise<string | null> {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const move = (window as any).__pwgChessAnswer;
+      if (move && typeof move === 'string' && move.length >= 2) {
+        return move;
+      }
+      await new Promise(r => setTimeout(r, 200));
+    }
+    return null;
   }
 
   async solveWordle(rule: ClassifiedRule, engine: PasswordEngine): Promise<ZoneUpdate> {

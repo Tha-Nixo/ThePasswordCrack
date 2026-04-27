@@ -9,11 +9,11 @@ export class RuleClassifier {
       return "numeric";
     }
     
-    if (/wordle/i.test(t) || /youtube/i.test(t) || /country/i.test(t)) {
+    if (/wordle/i.test(t) || /youtube/i.test(t) || /country/i.test(t) || /chess/i.test(t)) {
       return "external";
     }
     
-    if (/captcha/i.test(t) || /chess/i.test(t) || /maps/i.test(t) || /geoguessr/i.test(t)) {
+    if (/captcha/i.test(t) || /maps/i.test(t) || /geoguessr/i.test(t)) {
       return "human";
     }
 

@@ -66,7 +66,7 @@ String.prototype.includes = function(searchString: any, position?: number) {
     if (isOurPassword(this as unknown as string) && typeof searchString === 'string' && searchString.length > 2) {
         if (!['Helicopter', 'pepsi', '399', 'clump', 'snore'].includes(searchString)) {
             console.log("[PWG Spy] includes() called with:", searchString);
-            window.postMessage({ type: 'PWG_SPY_CANDIDATE', str: searchString }, "*");
+            window.postMessage({ type: 'PWG_SPY_INCLUDES', str: searchString }, "*");
         }
     }
     return originalIncludes.call(this, searchString, position);
@@ -77,7 +77,7 @@ String.prototype.indexOf = function(searchString: any, position?: number) {
     if (isOurPassword(this as unknown as string) && typeof searchString === 'string' && searchString.length > 2) {
         if (!['Helicopter', 'pepsi', '399', 'clump', 'snore'].includes(searchString)) {
             console.log("[PWG Spy] indexOf() called with:", searchString);
-            window.postMessage({ type: 'PWG_SPY_CANDIDATE', str: searchString }, "*");
+            window.postMessage({ type: 'PWG_SPY_INCLUDES', str: searchString }, "*");
         }
     }
     return originalIndexOf.call(this, searchString, position);
@@ -95,7 +95,8 @@ const originalTest = RegExp.prototype.test;
 RegExp.prototype.test = function(str: any) {
     if (isOurPassword(str)) {
         console.log("[PWG Spy] RegExp check:", this.source);
-        window.postMessage({ type: 'PWG_SPY_CANDIDATE', str: this.source }, "*");
+        // Do NOT send regex sources as candidates — they are patterns like \d, \n$, [A-Z] etc.
+        // Country detection uses includes(), not regex, so this would only pollute the results.
     }
     return originalTest.call(this, str);
 };

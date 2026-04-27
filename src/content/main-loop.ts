@@ -108,6 +108,8 @@ export class MainLoop {
       }
 
       if (passwordChanged) {
+        // Re-resolve numeric rules to account for digit pollution from new zones (e.g. leap year "2000")
+        this.resolveAllNumeric();
         this.domWriter.typePassword(this.engine.getPassword());
         this.log(`Attempted to type: ${this.engine.getPassword()}`);
         await this.domObserver.waitForStability();
@@ -155,7 +157,7 @@ export class MainLoop {
     );
 
     if (solution) {
-      this.log(`Solution applied: digits=${solution.digits}, roman=${solution.roman}`);
+      this.log(`Solution applied: digits=${solution.digits}, roman=${solution.roman}, elements=${solution.elements}`);
       if (solution.digits !== undefined) this.engine.setZone("digits", solution.digits, 40, []);
       if (solution.roman !== undefined) this.engine.setZone("roman", solution.roman, 50, []);
       if (solution.elements !== undefined) this.engine.setZone("elements", solution.elements, 60, []);

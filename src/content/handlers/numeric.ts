@@ -2,6 +2,7 @@ import { ClassifiedRule, Handler, ZoneUpdate, PasswordBudget, NumericConstraint 
 import { PasswordEngine } from "../password-engine";
 import { BudgetTracker } from "../solver/budget";
 import { digitCount, uppercaseCount } from "../../shared/unicode";
+import { scanElements, generateElementString } from "../solver/elements";
 
 export class NumericSolver {
 
@@ -30,14 +31,34 @@ export class NumericSolver {
     let romanString = "";
     
     if (romanMultiplyConstraint) {
-      // Assuming other zones have no uppercase Roman numerals, or their product is 1.
-      // If we implement a Roman multiplication tracker, we would divide target by current product.
-      // For now, we supply the literal target value which will be parsed as a single Roman numeral.
       romanString = this.intToRoman(Math.max(0, romanMultiplyConstraint.target as number));
     } else if (needsRoman) {
       if (budget.romanValueFromOtherZones === 0) {
-        romanString = "V"; // Just supply a basic Roman numeral
+        romanString = "V";
       }
+    }
+
+    // --- Atomic number (element) handling ---
+    const atomicConstraint = constraints.find(c => c.type === "atomic_sum" && c.target !== undefined);
+    let elementsString = "";
+    if (atomicConstraint) {
+      // Build the password WITHOUT the elements zone to see what elements already exist
+      const pwWithoutElements = engine.getPasswordExcludingZone("elements");
+      // Also include the new digits and roman we're about to set
+      const oldDigits = engine.getZone("digits")?.content || "";
+      const oldRoman = engine.getZone("roman")?.content || "";
+      const simulatedPw = pwWithoutElements
+        .replace(oldDigits, digitCandidates)
+        .replace(oldRoman, romanString);
+      
+      const { sum: currentAtomicSum } = scanElements(simulatedPw);
+      const atomicGap = (atomicConstraint.target as number) - currentAtomicSum;
+      
+      if (atomicGap > 0) {
+        elementsString = generateElementString(atomicGap) || "";
+      }
+      // If gap <= 0, existing elements already exceed target — we'd need to remove some,
+      // but that's a rare edge case. For now, leave elements empty.
     }
 
     // Checking global budget logic
@@ -53,14 +74,13 @@ export class NumericSolver {
 
     const digitPercentConstraint = constraints.find(c => c.type === "ratio");
     if (digitPercentConstraint && digitPercentConstraint.maxRatio && (newDigitCount / totalNewLength) > digitPercentConstraint.maxRatio) {
-      // Need length constraint handling, simplified here
       return this.solveWithLengthConstraint(constraints, budget, engine);
     }
 
     return {
       digits: digitCandidates,
       roman: romanString,
-      elements: "", // Placeholder
+      elements: elementsString,
     };
   }
 
@@ -110,10 +130,10 @@ export function parseNumericConstraint(rule: ClassifiedRule): NumericConstraint 
     return { type: "roman_presence" };
   }
 
-  // Element atomic number sum
+  // Element atomic number sum — use dedicated type to avoid conflicting with digit sum
   if (/atomic/i.test(t) && /add\s+up/i.test(t)) {
     const match = t.match(/add\s+up\s+to\s*(\d+)/i);
-    return { type: "sum", target: match ? parseInt(match[1]) : 0 };
+    return { type: "atomic_sum", target: match ? parseInt(match[1]) : 0 };
   }
 
   return { type: "ratio", maxRatio: 0.3 };

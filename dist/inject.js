@@ -63,7 +63,7 @@
         if (isOurPassword(this) && typeof searchString === "string" && searchString.length > 2) {
           if (!["Helicopter", "pepsi", "399", "clump", "snore"].includes(searchString)) {
             console.log("[PWG Spy] includes() called with:", searchString);
-            window.postMessage({ type: "PWG_SPY_CANDIDATE", str: searchString }, "*");
+            window.postMessage({ type: "PWG_SPY_INCLUDES", str: searchString }, "*");
           }
         }
         return originalIncludes.call(this, searchString, position);
@@ -73,7 +73,7 @@
         if (isOurPassword(this) && typeof searchString === "string" && searchString.length > 2) {
           if (!["Helicopter", "pepsi", "399", "clump", "snore"].includes(searchString)) {
             console.log("[PWG Spy] indexOf() called with:", searchString);
-            window.postMessage({ type: "PWG_SPY_CANDIDATE", str: searchString }, "*");
+            window.postMessage({ type: "PWG_SPY_INCLUDES", str: searchString }, "*");
           }
         }
         return originalIndexOf.call(this, searchString, position);
@@ -89,7 +89,6 @@
       RegExp.prototype.test = function(str) {
         if (isOurPassword(str)) {
           console.log("[PWG Spy] RegExp check:", this.source);
-          window.postMessage({ type: "PWG_SPY_CANDIDATE", str: this.source }, "*");
         }
         return originalTest.call(this, str);
       };
