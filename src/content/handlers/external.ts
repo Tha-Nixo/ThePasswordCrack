@@ -119,7 +119,7 @@ export class ExternalHandler implements Handler {
       const url = "https://www.youtube.com/watch?v=" + youtubeIds[totalSeconds];
       return {
         zone: "youtube",
-        content: ` <a href="${url}">${url.toLowerCase()}</a> `,
+        content: ` <a href="${url}">${url}</a> `,
         priority: 80
       };
     }

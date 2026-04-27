@@ -1,5 +1,5 @@
 import { PasswordBudget, GlobalConstraint } from "../../shared/types";
-import { charCount, digitCount, uppercaseCount, lowercaseCount, digitSum, romanChars } from "../../shared/unicode";
+import { charCount, digitCount, uppercaseCount, lowercaseCount, digitSum, romanChars, stripHtml } from "../../shared/unicode";
 import { PasswordEngine } from "../password-engine";
 
 export type RomanParseStrategy = "contiguous" | "all_chars" | "maximal_munch";
@@ -33,6 +33,12 @@ export class RomanParser {
     }
   }
 
+  public parseRomanProduct(s: string): number {
+    const matches = s.match(/[IVXLCDM]+/g) || [];
+    if (matches.length === 0) return 1;
+    return matches.reduce((product, m) => product * this.evalRoman(m), 1);
+  }
+
   private evalRoman(s: string): number {
     const vals: Record<string, number> = {M:1000, D:500, C:100, L:50, X:10, V:5, I:1};
     let total = 0;
@@ -43,18 +49,14 @@ export class RomanParser {
     }
     return total;
   }
-
-  private findAllRomanSubstrings(s: string): number[] {
-    const matches = s.match(/[IVXLCDM]+/g) || [];
-    return matches.map(m => this.evalRoman(m));
-  }
 }
 
 export class BudgetTracker {
   private romanParser = new RomanParser();
 
   compute(engine: PasswordEngine): PasswordBudget {
-    const password = engine.getPassword();
+    const rawPassword = engine.getPassword();
+    const password = stripHtml(rawPassword);
     const zones = engine.getAllZones();
 
     const budget: PasswordBudget = {
@@ -66,15 +68,18 @@ export class BudgetTracker {
       specialCount: charCount(password.replace(/[a-zA-Z0-9]/g, "")),
       romanCharCount: charCount(romanChars(password)),
       romanValueFromOtherZones: 0,
+      romanProductFromOtherZones: 1,
       digitSumFromOtherZones: 0,
     };
 
     for (const [name, zone] of zones) {
+      const cleanContent = stripHtml(zone.content);
       if (name !== "roman") {
-        budget.romanValueFromOtherZones += this.romanParser.parseRomanValue(zone.content);
+        budget.romanValueFromOtherZones += this.romanParser.parseRomanValue(cleanContent);
+        budget.romanProductFromOtherZones *= this.romanParser.parseRomanProduct(cleanContent);
       }
       if (name !== "digits") {
-        budget.digitSumFromOtherZones += digitSum(zone.content);
+        budget.digitSumFromOtherZones += digitSum(cleanContent);
       }
     }
 

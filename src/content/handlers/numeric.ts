@@ -1,7 +1,7 @@
 import { ClassifiedRule, Handler, ZoneUpdate, PasswordBudget, NumericConstraint } from "../../shared/types";
 import { PasswordEngine } from "../password-engine";
 import { BudgetTracker } from "../solver/budget";
-import { digitCount, uppercaseCount } from "../../shared/unicode";
+import { digitCount, uppercaseCount, stripHtml } from "../../shared/unicode";
 import { scanElements, generateElementString } from "../solver/elements";
 
 export class NumericSolver {
@@ -21,7 +21,12 @@ export class NumericSolver {
     // We simulate the prompt's logic:
     
     const adjustedDigitTarget = (digitSumConstraint?.target ?? 0) - budget.digitSumFromOtherZones;
-    const digitCandidates = this.generateDigitString(adjustedDigitTarget);
+    let digitCandidates = "";
+    if (adjustedDigitTarget < 0 && digitSumConstraint?.target !== undefined) {
+      console.warn(`[PWG] ❌ MATH IMPOSSIBLE: Rule 5 requires digit sum to be ${digitSumConstraint.target}, but fixed elements (like YouTube URL, Captcha) have digit sum ${budget.digitSumFromOtherZones}. Since we cannot remove digits from these locked rules, this run is softlocked. Please RELOAD the page to get a different random state!`);
+    } else {
+      digitCandidates = this.generateDigitString(adjustedDigitTarget);
+    }
 
     // Check for Roman Numeral multiplication
     const romanMultiplyConstraint = constraints.find(c => c.type === "roman_multiply" && c.target !== undefined);
@@ -31,7 +36,22 @@ export class NumericSolver {
     let romanString = "";
     
     if (romanMultiplyConstraint) {
-      romanString = this.intToRoman(Math.max(0, romanMultiplyConstraint.target as number));
+      const targetProduct = romanMultiplyConstraint.target as number;
+      const otherProduct = budget.romanProductFromOtherZones || 1;
+      
+      let neededProduct = targetProduct;
+      if (otherProduct > 1 && targetProduct % otherProduct === 0) {
+        neededProduct = targetProduct / otherProduct;
+      } else if (targetProduct % otherProduct !== 0) {
+        console.warn(`[PWG] ❌ MATH IMPOSSIBLE: Rule 9 requires Roman numerals to multiply to ${targetProduct}, but fixed elements (like YouTube URL) have Roman product ${otherProduct}. Since ${targetProduct} is not divisible by ${otherProduct}, this run is softlocked. Please RELOAD the page to get a different random state!`);
+      }
+      
+      if (neededProduct > 1) {
+        romanString = this.intToRoman(neededProduct);
+      } else if (neededProduct === 1 && budget.romanValueFromOtherZones === 0) {
+        // If target is 1 and no other romans exist, add an 'I'
+        romanString = "I";
+      }
     } else if (needsRoman) {
       if (budget.romanValueFromOtherZones === 0) {
         romanString = "V";
@@ -42,16 +62,18 @@ export class NumericSolver {
     const atomicConstraint = constraints.find(c => c.type === "atomic_sum" && c.target !== undefined);
     let elementsString = "";
     if (atomicConstraint) {
-      // Build the password WITHOUT the elements zone to see what elements already exist
-      const pwWithoutElements = engine.getPasswordExcludingZone("elements");
-      // Also include the new digits and roman we're about to set
-      const oldDigits = engine.getZone("digits")?.content || "";
-      const oldRoman = engine.getZone("roman")?.content || "";
-      const simulatedPw = pwWithoutElements
-        .replace(oldDigits, digitCandidates)
-        .replace(oldRoman, romanString);
+      let simulatedPw = "";
+      for (const [name, zone] of engine.getAllZones()) {
+        if (name === "elements") continue;
+        if (name === "digits") simulatedPw += digitCandidates;
+        else if (name === "roman") simulatedPw += romanString;
+        else simulatedPw += zone.content;
+      }
+      // If digits or roman zones didn't exist yet, append them
+      if (!engine.getZone("digits")) simulatedPw += digitCandidates;
+      if (!engine.getZone("roman")) simulatedPw += romanString;
       
-      const { sum: currentAtomicSum } = scanElements(simulatedPw);
+      const { sum: currentAtomicSum } = scanElements(stripHtml(simulatedPw));
       const atomicGap = (atomicConstraint.target as number) - currentAtomicSum;
       
       if (atomicGap > 0) {

@@ -212,4 +212,26 @@ export class DOMWriter {
       ruleEl.querySelector("[class*='check'], [class*='satisfied']") !== null
     );
   }
+
+  async sacrificeLetters(letters: [string, string]): Promise<void> {
+    const sacrificeButtons = Array.from(document.querySelectorAll('.sacrifice-btn, button')).filter(b => {
+      const text = b.textContent?.trim().toUpperCase();
+      return text === letters[0] || text === letters[1];
+    }) as HTMLElement[];
+    
+    if (sacrificeButtons.length >= 2) {
+      sacrificeButtons[0].click();
+      await this.waitForDOMStability(200);
+      sacrificeButtons[1].click();
+      await this.waitForDOMStability(200);
+      
+      const submitBtn = Array.from(document.querySelectorAll('.sacrifice-btn, button')).find(b => 
+        b.textContent?.toLowerCase().includes('sacrifice')
+      ) as HTMLElement;
+      
+      if (submitBtn) {
+        submitBtn.click();
+      }
+    }
+  }
 }

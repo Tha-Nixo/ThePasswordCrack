@@ -21,6 +21,10 @@ export class RuleClassifier {
       return "pattern";
     }
 
+    if (/sacrifice/i.test(t)) {
+      return "sacrifice";
+    }
+
     if (/time/i.test(t)) {
       return "time";
     }

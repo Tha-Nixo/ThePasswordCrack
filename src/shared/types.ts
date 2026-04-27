@@ -7,6 +7,7 @@ export interface PasswordBudget {
   specialCount: number;
   romanCharCount: number;
   romanValueFromOtherZones: number;
+  romanProductFromOtherZones: number;
   digitSumFromOtherZones: number;
 }
 
@@ -43,7 +44,7 @@ export interface GlobalConstraint {
 }
 
 export interface NumericConstraint {
-  type: "sum" | "ratio" | "roman_presence" | "roman_multiply";
+  type: "sum" | "ratio" | "roman_presence" | "roman_multiply" | "atomic_sum";
   target?: number;
   maxRatio?: number;
 }

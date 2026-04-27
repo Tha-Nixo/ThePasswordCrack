@@ -64,9 +64,22 @@ function isOurPassword(str: string): boolean {
     return originalIncludes.call(lowerStr, 'strongpassword') || originalIncludes.call(lowerStr, 'may');
 }
 
+// Known strings to ignore in spy logging
+const SPY_IGNORE = new Set(['Helicopter', 'pepsi', 'strongpassword', '399', '699', 'clump', 'snore']);
+
+// Known affirmation/wordle/sponsor strings the game checks (not captchas)
+const KNOWN_CHECKS = new Set([
+    'starbucks', 'shell', 'pepsi',
+    'i am loved', 'i am worthy', 'i am enough',
+    'iamloved', 'iamworthy', 'iamenough',
+    'january', 'february', 'march', 'april', 'may', 'june',
+    'july', 'august', 'september', 'october', 'november', 'december',
+    'eerie', 'quack'  // wordle answers get rotated, but these are today's
+]);
+
 String.prototype.includes = function(searchString: any, position?: number) {
     if (isOurPassword(this as unknown as string) && typeof searchString === 'string' && searchString.length > 2) {
-        if (!['Helicopter', 'pepsi', '399', 'clump', 'snore'].includes(searchString)) {
+        if (!SPY_IGNORE.has(searchString)) {
             console.log("[PWG Spy] includes() called with:", searchString);
             window.postMessage({ type: 'PWG_SPY_INCLUDES', str: searchString }, "*");
         }
@@ -77,7 +90,7 @@ String.prototype.includes = function(searchString: any, position?: number) {
 const originalIndexOf = String.prototype.indexOf;
 String.prototype.indexOf = function(searchString: any, position?: number) {
     if (isOurPassword(this as unknown as string) && typeof searchString === 'string' && searchString.length > 2) {
-        if (!['Helicopter', 'pepsi', '399', 'clump', 'snore'].includes(searchString)) {
+        if (!SPY_IGNORE.has(searchString)) {
             console.log("[PWG Spy] indexOf() called with:", searchString);
             window.postMessage({ type: 'PWG_SPY_INCLUDES', str: searchString }, "*");
         }

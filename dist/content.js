@@ -249,6 +249,24 @@
         isRuleSatisfied(ruleEl) {
           return ruleEl.classList.contains("satisfied") || ruleEl.classList.contains("completed") || ruleEl.querySelector("[class*='check'], [class*='satisfied']") !== null;
         }
+        async sacrificeLetters(letters) {
+          const sacrificeButtons = Array.from(document.querySelectorAll(".sacrifice-btn, button")).filter((b) => {
+            const text = b.textContent?.trim().toUpperCase();
+            return text === letters[0] || text === letters[1];
+          });
+          if (sacrificeButtons.length >= 2) {
+            sacrificeButtons[0].click();
+            await this.waitForDOMStability(200);
+            sacrificeButtons[1].click();
+            await this.waitForDOMStability(200);
+            const submitBtn = Array.from(document.querySelectorAll(".sacrifice-btn, button")).find(
+              (b) => b.textContent?.toLowerCase().includes("sacrifice")
+            );
+            if (submitBtn) {
+              submitBtn.click();
+            }
+          }
+        }
       };
     }
   });
@@ -428,6 +446,9 @@
   function romanChars(s) {
     return Array.from(s).filter((c) => "IVXLCDM".includes(c)).join("");
   }
+  function stripHtml(s) {
+    return s.replace(/<[^>]*>/g, "");
+  }
   var init_unicode = __esm({
     "src/shared/unicode.ts"() {
       "use strict";
@@ -458,6 +479,11 @@
               return this.findAllRomanSubstrings(s).reduce((sum, val) => sum + val, 0);
           }
         }
+        parseRomanProduct(s) {
+          const matches = s.match(/[IVXLCDM]+/g) || [];
+          if (matches.length === 0) return 1;
+          return matches.reduce((product, m) => product * this.evalRoman(m), 1);
+        }
         evalRoman(s) {
           const vals = { M: 1e3, D: 500, C: 100, L: 50, X: 10, V: 5, I: 1 };
           let total = 0;
@@ -468,15 +494,12 @@
           }
           return total;
         }
-        findAllRomanSubstrings(s) {
-          const matches = s.match(/[IVXLCDM]+/g) || [];
-          return matches.map((m) => this.evalRoman(m));
-        }
       };
       BudgetTracker = class {
         romanParser = new RomanParser();
         compute(engine) {
-          const password = engine.getPassword();
+          const rawPassword = engine.getPassword();
+          const password = stripHtml(rawPassword);
           const zones = engine.getAllZones();
           const budget = {
             totalLength: charCount(password),
@@ -487,14 +510,17 @@
             specialCount: charCount(password.replace(/[a-zA-Z0-9]/g, "")),
             romanCharCount: charCount(romanChars(password)),
             romanValueFromOtherZones: 0,
+            romanProductFromOtherZones: 1,
             digitSumFromOtherZones: 0
           };
           for (const [name, zone] of zones) {
+            const cleanContent = stripHtml(zone.content);
             if (name !== "roman") {
-              budget.romanValueFromOtherZones += this.romanParser.parseRomanValue(zone.content);
+              budget.romanValueFromOtherZones += this.romanParser.parseRomanValue(cleanContent);
+              budget.romanProductFromOtherZones *= this.romanParser.parseRomanProduct(cleanContent);
             }
             if (name !== "digits") {
-              budget.digitSumFromOtherZones += digitSum(zone.content);
+              budget.digitSumFromOtherZones += digitSum(cleanContent);
             }
           }
           return budget;
@@ -538,6 +564,9 @@
           }
           if (/month/i.test(t)) {
             return "pattern";
+          }
+          if (/sacrifice/i.test(t)) {
+            return "sacrifice";
           }
           if (/time/i.test(t)) {
             return "time";
@@ -877,12 +906,29 @@
         solveAll(constraints, engine, budget) {
           const digitSumConstraint = constraints.find((c) => c.type === "sum" && c.target !== void 0);
           const adjustedDigitTarget = (digitSumConstraint?.target ?? 0) - budget.digitSumFromOtherZones;
-          const digitCandidates = this.generateDigitString(adjustedDigitTarget);
+          let digitCandidates = "";
+          if (adjustedDigitTarget < 0 && digitSumConstraint?.target !== void 0) {
+            console.warn(`[PWG] \u274C MATH IMPOSSIBLE: Rule 5 requires digit sum to be ${digitSumConstraint.target}, but fixed elements (like YouTube URL, Captcha) have digit sum ${budget.digitSumFromOtherZones}. Since we cannot remove digits from these locked rules, this run is softlocked. Please RELOAD the page to get a different random state!`);
+          } else {
+            digitCandidates = this.generateDigitString(adjustedDigitTarget);
+          }
           const romanMultiplyConstraint = constraints.find((c) => c.type === "roman_multiply" && c.target !== void 0);
           const needsRoman = constraints.some((c) => c.type === "roman_presence");
           let romanString = "";
           if (romanMultiplyConstraint) {
-            romanString = this.intToRoman(Math.max(0, romanMultiplyConstraint.target));
+            const targetProduct = romanMultiplyConstraint.target;
+            const otherProduct = budget.romanProductFromOtherZones || 1;
+            let neededProduct = targetProduct;
+            if (otherProduct > 1 && targetProduct % otherProduct === 0) {
+              neededProduct = targetProduct / otherProduct;
+            } else if (targetProduct % otherProduct !== 0) {
+              console.warn(`[PWG] \u274C MATH IMPOSSIBLE: Rule 9 requires Roman numerals to multiply to ${targetProduct}, but fixed elements (like YouTube URL) have Roman product ${otherProduct}. Since ${targetProduct} is not divisible by ${otherProduct}, this run is softlocked. Please RELOAD the page to get a different random state!`);
+            }
+            if (neededProduct > 1) {
+              romanString = this.intToRoman(neededProduct);
+            } else if (neededProduct === 1 && budget.romanValueFromOtherZones === 0) {
+              romanString = "I";
+            }
           } else if (needsRoman) {
             if (budget.romanValueFromOtherZones === 0) {
               romanString = "V";
@@ -891,11 +937,16 @@
           const atomicConstraint = constraints.find((c) => c.type === "atomic_sum" && c.target !== void 0);
           let elementsString = "";
           if (atomicConstraint) {
-            const pwWithoutElements = engine.getPasswordExcludingZone("elements");
-            const oldDigits = engine.getZone("digits")?.content || "";
-            const oldRoman = engine.getZone("roman")?.content || "";
-            const simulatedPw = pwWithoutElements.replace(oldDigits, digitCandidates).replace(oldRoman, romanString);
-            const { sum: currentAtomicSum } = scanElements(simulatedPw);
+            let simulatedPw = "";
+            for (const [name, zone] of engine.getAllZones()) {
+              if (name === "elements") continue;
+              if (name === "digits") simulatedPw += digitCandidates;
+              else if (name === "roman") simulatedPw += romanString;
+              else simulatedPw += zone.content;
+            }
+            if (!engine.getZone("digits")) simulatedPw += digitCandidates;
+            if (!engine.getZone("roman")) simulatedPw += romanString;
+            const { sum: currentAtomicSum } = scanElements(stripHtml(simulatedPw));
             const atomicGap = atomicConstraint.target - currentAtomicSum;
             if (atomicGap > 0) {
               elementsString = generateElementString(atomicGap) || "";
@@ -1031,6 +1082,7 @@
     "src/content/main-loop.ts"() {
       "use strict";
       init_numeric();
+      init_unicode();
       MainLoop = class {
         constructor(domReader, domWriter, domObserver, engine, budget, classifier, numericSolver, conflictResolver, handlers, humanHandler) {
           this.domReader = domReader;
@@ -1063,7 +1115,7 @@
           this.log("Initializing...");
           const strategy = await this.domWriter.detectStrategy();
           this.log(`Write strategy: ${strategy}`);
-          this.engine.setZone("base", "strongpassword1A!", 10, []);
+          this.engine.setZone("base", "strongpasswordA!", 10, []);
           this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
           this.domObserver.onRulesChanged(() => this.scheduleTick());
           setInterval(() => this.scheduleTick(), 5e3);
@@ -1089,13 +1141,27 @@
               this.knownRules.set(rule.number, rule);
               this.log(`New rule #${rule.number} [${rule.category}]: ${rule.text}`);
               if (rule.category === "human") {
-                this.paused = true;
-                this.log(`\u23F8 Waiting for human input on rule #${rule.number}`);
-                const input = await this.requestHumanInput(rule, `Human input required for rule #${rule.number}: ${rule.text}`);
-                this.engine.setZone(`human_${rule.number}`, input, 90 + rule.number, [rule.number]);
-                this.engine.lockZone(`human_${rule.number}`);
+                this.log(`\u{1F524} Attempting auto-solve for CAPTCHA rule #${rule.number}`);
+                let captcha = window.__pwgCaptchaAnswer;
+                if (!captcha) {
+                  this.domWriter.typePassword(this.formatPassword(this.engine.getPassword()));
+                  await this.domObserver.waitForStability(200, 2e3);
+                  captcha = await this.waitForCaptcha(3e3);
+                }
+                if (captcha) {
+                  this.log(`\u{1F524} CAPTCHA auto-solved: "${captcha}"`);
+                  this.engine.setZone(`human_${rule.number}`, captcha, 90 + rule.number, [rule.number]);
+                  this.engine.lockZone(`human_${rule.number}`);
+                } else {
+                  this.paused = true;
+                  this.log(`\u23F8 CAPTCHA not detected by spy, falling back to human input on rule #${rule.number}`);
+                  const input = await this.requestHumanInput(rule, `CAPTCHA required for rule #${rule.number}: ${rule.text}`);
+                  this.engine.setZone(`human_${rule.number}`, input, 90 + rule.number, [rule.number]);
+                  this.engine.lockZone(`human_${rule.number}`);
+                  this.paused = false;
+                }
                 const newBudget = this.budget.compute(this.engine);
-                this.log(`Post-human budget: len=${newBudget.totalLength}, digitSum=${newBudget.digitSumFromOtherZones}, romanPollution=${newBudget.romanValueFromOtherZones}`);
+                this.log(`Post-CAPTCHA budget: len=${newBudget.totalLength}, digitSum=${newBudget.digitSumFromOtherZones}, romanPollution=${newBudget.romanValueFromOtherZones}`);
                 for (const [category, handler] of Array.from(this.handlers.entries())) {
                   if (category === "human") continue;
                   const rulesInCategory = [...this.knownRules.values()].filter((r) => r.category === category);
@@ -1106,7 +1172,7 @@
                   }
                 }
                 this.resolveAllNumeric();
-                this.paused = false;
+                passwordChanged = true;
               } else if (rule.category === "numeric") {
                 this.resolveAllNumeric();
                 passwordChanged = true;
@@ -1148,6 +1214,17 @@
           const numericRules = [...this.knownRules.values()].filter((r) => r.category === "numeric");
           if (numericRules.length === 0) return;
           this.log(`Resolving numeric rules: ${numericRules.map((r) => r.text).join(" | ")}`);
+          const digitSumConstraint = numericRules.find((r) => {
+            const t = r.text.toLowerCase();
+            return /digits/i.test(t) && /add\s+up/i.test(t);
+          });
+          if (digitSumConstraint) {
+            const targetMatch = digitSumConstraint.text.match(/add\s+up\s+to\s*(\d+)/i);
+            const target = targetMatch ? parseInt(targetMatch[1]) : 0;
+            if (target > 0) {
+              this.compensateDigitOverflow(target);
+            }
+          }
           const currentBudget = this.budget.compute(this.engine);
           this.log(`Current Budget: DigitsSum=${currentBudget.digitSumFromOtherZones}`);
           const constraints = numericRules.map((r) => parseNumericConstraint(r));
@@ -1166,6 +1243,80 @@
           } else {
             this.log("Numeric solver failed \u2014 flagging to user", "error");
           }
+        }
+        /**
+         * When locked zones contribute too many digits, dynamically adjust
+         * the base password and leap year to minimize digit pollution.
+         */
+        compensateDigitOverflow(target) {
+          const zones = this.engine.getAllZones();
+          let otherSum = 0;
+          for (const [name, zone] of zones) {
+            if (name !== "digits") {
+              otherSum += digitSum(stripHtml(zone.content));
+            }
+          }
+          if (otherSum <= target) return;
+          const overflow = otherSum - target;
+          this.log(`\u26A0\uFE0F Digit overflow detected: otherZones=${otherSum}, target=${target}, overflow=${overflow}`);
+          const baseZone = this.engine.getZone("base");
+          if (baseZone && !baseZone.locked) {
+            const baseContent = baseZone.content;
+            const baseDigitSum = digitSum(baseContent);
+            if (baseDigitSum > 0) {
+              const newBase = baseContent.replace(/\d/g, "");
+              this.engine.setZone("base", newBase, baseZone.priority, baseZone.ruleDependencies);
+              this.log(`  \u2192 Removed digits from base: "${baseContent}" \u2192 "${newBase}" (saved ${baseDigitSum})`);
+              otherSum -= baseDigitSum;
+              if (otherSum <= target) return;
+            }
+          }
+          const leapZone = this.engine.getZone("leapyear");
+          if (leapZone && !leapZone.locked) {
+            const currentLeap = leapZone.content;
+            const currentLeapDigitSum = digitSum(currentLeap);
+            const maxAllowed = target - (otherSum - currentLeapDigitSum);
+            const candidates = [
+              { year: "10000", sum: 1 },
+              // 1+0+0+0+0 = 1, divisible by 400
+              { year: "2000", sum: 2 },
+              // 2+0+0+0 = 2
+              { year: "1200", sum: 3 },
+              // 1+2+0+0 = 3
+              { year: "4", sum: 4 },
+              // 4
+              { year: "400", sum: 4 },
+              // 4+0+0 = 4
+              { year: "2004", sum: 6 },
+              // 2+0+0+4 = 6
+              { year: "2400", sum: 6 },
+              // 2+4+0+0 = 6
+              { year: "1600", sum: 7 },
+              // 1+6+0+0 = 7
+              { year: "800", sum: 8 },
+              // 8+0+0 = 8
+              { year: "2008", sum: 10 }
+              // 2+0+0+8 = 10
+            ];
+            for (const c of candidates) {
+              if (c.sum <= maxAllowed && c.year !== currentLeap) {
+                this.engine.setZone("leapyear", c.year, leapZone.priority, leapZone.ruleDependencies);
+                this.log(`  \u2192 Swapped leap year: "${currentLeap}" \u2192 "${c.year}" (digitSum ${currentLeapDigitSum} \u2192 ${c.sum})`);
+                break;
+              }
+            }
+          }
+        }
+        async waitForCaptcha(timeoutMs) {
+          const start = Date.now();
+          while (Date.now() - start < timeoutMs) {
+            const captcha = window.__pwgCaptchaAnswer;
+            if (captcha && typeof captcha === "string" && captcha.length >= 3) {
+              return captcha;
+            }
+            await new Promise((r) => setTimeout(r, 300));
+          }
+          return null;
         }
         async requestHumanInput(rule, prompt) {
           return this.humanHandler.requestInput(rule, prompt);
@@ -1524,7 +1675,7 @@
             const url = "https://www.youtube.com/watch?v=" + youtubeIds[totalSeconds];
             return {
               zone: "youtube",
-              content: ` <a href="${url}">${url.toLowerCase()}</a> `,
+              content: ` <a href="${url}">${url}</a> `,
               priority: 80
             };
           }
@@ -1560,6 +1711,45 @@
     }
   });
 
+  // src/content/handlers/sacrifice.ts
+  var SacrificeHandler;
+  var init_sacrifice = __esm({
+    "src/content/handlers/sacrifice.ts"() {
+      "use strict";
+      SacrificeHandler = class {
+        constructor(domWriter) {
+          this.domWriter = domWriter;
+        }
+        domWriter;
+        async solve(rule, engine, budgetTracker) {
+          if (engine.getZone("sacrifice")?.locked) {
+            return { zone: "sacrifice", content: "", priority: 99 };
+          }
+          const password = engine.getPassword().toUpperCase();
+          const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+          const unused = [];
+          for (const char of alphabet) {
+            if (!password.includes(char)) {
+              unused.push(char);
+            }
+          }
+          if (unused.length >= 2) {
+            const letters = [unused[0], unused[1]];
+            console.log(`[PWG] \u{1FA78} Sacrificing letters: ${letters[0]}, ${letters[1]}`);
+            await this.domWriter.sacrificeLetters(letters);
+          } else {
+            console.warn("[PWG] \u26A0\uFE0F Not enough unused letters to sacrifice!");
+          }
+          return {
+            zone: "sacrifice",
+            content: "",
+            priority: 99
+          };
+        }
+      };
+    }
+  });
+
   // src/content/index.ts
   var require_index = __commonJS({
     "src/content/index.ts"() {
@@ -1577,6 +1767,7 @@
       init_pattern();
       init_time();
       init_external();
+      init_sacrifice();
       var KNOWN_COUNTRIES = /* @__PURE__ */ new Set([
         "afghanistan",
         "albania",
@@ -1780,6 +1971,31 @@
           window.__pwgCountryAnswer = event.data.country;
           console.log("[PWG] \u{1F5FA}\uFE0F GeoGuessr intercepted via API! Country:", event.data.country);
         }
+        const KNOWN_GAME_STRINGS = /* @__PURE__ */ new Set([
+          "starbucks",
+          "shell",
+          "pepsi",
+          "i am loved",
+          "i am worthy",
+          "i am enough",
+          "iamloved",
+          "iamworthy",
+          "iamenough",
+          "january",
+          "february",
+          "march",
+          "april",
+          "may",
+          "june",
+          "july",
+          "august",
+          "september",
+          "october",
+          "november",
+          "december",
+          "eerie",
+          "quack"
+        ]);
         if (event.data.type === "PWG_SPY_INCLUDES") {
           const candidate = event.data.str;
           const CHESS_REGEX = /^[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?$/;
@@ -1800,6 +2016,11 @@
               }, 3e3);
             }
           }
+          const candidateLower = candidate.toLowerCase();
+          if (!window.__pwgCaptchaAnswer && candidate.length >= 3 && candidate.length <= 8 && /^[a-z0-9]+$/i.test(candidate) && !KNOWN_COUNTRIES.has(candidateLower) && !KNOWN_GAME_STRINGS.has(candidateLower) && !CHESS_REGEX.test(candidate) && !CASTLING_REGEX.test(candidate)) {
+            window.__pwgCaptchaAnswer = candidate;
+            console.log("[PWG] \u{1F524} CAPTCHA detected from spy:", candidate);
+          }
         }
       });
       async function init() {
@@ -1818,6 +2039,7 @@
         handlers.set("pattern", new PatternHandler());
         handlers.set("time", new TimeHandler());
         handlers.set("external", new ExternalHandler(humanHandler));
+        handlers.set("sacrifice", new SacrificeHandler(domWriter));
         const conflictResolver = new ConflictResolver(numericSolver, handlers);
         const mainLoop = new MainLoop(
           domReader,
@@ -1842,4 +2064,3 @@
   });
   require_index();
 })();
-//# sourceMappingURL=content.js.map

@@ -60,4 +60,8 @@ function romanChars(s: string): string {
   return Array.from(s).filter(c => "IVXLCDM".includes(c)).join("");
 }
 
+export function stripHtml(s: string): string {
+  return s.replace(/<[^>]*>/g, "");
+}
+
 export { charCount, digitCount, uppercaseCount, lowercaseCount, digitSum, romanChars };

@@ -13,6 +13,7 @@ import { NumericSolver, NumericHandler } from "./handlers/numeric";
 import { PatternHandler } from "./handlers/pattern";
 import { TimeHandler } from "./handlers/time";
 import { ExternalHandler } from "./handlers/external";
+import { SacrificeHandler } from "./handlers/sacrifice";
 import { Handler } from "../shared/types";
 
   // Known country names the game checks against (lowercase, no spaces)
@@ -57,6 +58,16 @@ import { Handler } from "../shared/types";
       console.log("[PWG] 🗺️ GeoGuessr intercepted via API! Country:", event.data.country);
     }
     
+  // Known affirmation/sponsor/wordle strings that are NOT captchas
+  const KNOWN_GAME_STRINGS = new Set([
+    "starbucks", "shell", "pepsi",
+    "i am loved", "i am worthy", "i am enough",
+    "iamloved", "iamworthy", "iamenough",
+    "january", "february", "march", "april", "may", "june",
+    "july", "august", "september", "october", "november", "december",
+    "eerie", "quack"
+  ]);
+
     // Spy intercept from includes()/indexOf() calls
     if (event.data.type === "PWG_SPY_INCLUDES") {
       const candidate = event.data.str;
@@ -86,6 +97,22 @@ import { Handler } from "../shared/types";
           setTimeout(() => { countryBatchSeen = false; }, 3000);
         }
       }
+
+      // CAPTCHA detection — short alphanumeric string that isn't a country, chess move, or known keyword
+      // The game checks password.includes(captchaText) where captchaText is typically 5 chars, lowercase alphanumeric
+      const candidateLower = candidate.toLowerCase();
+      if (
+        !( window as any).__pwgCaptchaAnswer &&
+        candidate.length >= 3 && candidate.length <= 8 &&
+        /^[a-z0-9]+$/i.test(candidate) &&
+        !KNOWN_COUNTRIES.has(candidateLower) &&
+        !KNOWN_GAME_STRINGS.has(candidateLower) &&
+        !CHESS_REGEX.test(candidate) &&
+        !CASTLING_REGEX.test(candidate)
+      ) {
+        (window as any).__pwgCaptchaAnswer = candidate;
+        console.log("[PWG] 🔤 CAPTCHA detected from spy:", candidate);
+      }
     }
   });
 
@@ -108,6 +135,7 @@ async function init() {
   handlers.set("pattern", new PatternHandler());
   handlers.set("time", new TimeHandler());
   handlers.set("external", new ExternalHandler(humanHandler));
+  handlers.set("sacrifice", new SacrificeHandler(domWriter));
 
   const conflictResolver = new ConflictResolver(numericSolver, handlers);
 

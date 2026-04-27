@@ -60,9 +60,10 @@
         const lowerStr = str.toLowerCase();
         return originalIncludes.call(lowerStr, "strongpassword") || originalIncludes.call(lowerStr, "may");
       }
+      var SPY_IGNORE = /* @__PURE__ */ new Set(["Helicopter", "pepsi", "strongpassword", "399", "699", "clump", "snore"]);
       String.prototype.includes = function(searchString, position) {
         if (isOurPassword(this) && typeof searchString === "string" && searchString.length > 2) {
-          if (!["Helicopter", "pepsi", "399", "clump", "snore"].includes(searchString)) {
+          if (!SPY_IGNORE.has(searchString)) {
             console.log("[PWG Spy] includes() called with:", searchString);
             window.postMessage({ type: "PWG_SPY_INCLUDES", str: searchString }, "*");
           }
@@ -72,7 +73,7 @@
       var originalIndexOf = String.prototype.indexOf;
       String.prototype.indexOf = function(searchString, position) {
         if (isOurPassword(this) && typeof searchString === "string" && searchString.length > 2) {
-          if (!["Helicopter", "pepsi", "399", "clump", "snore"].includes(searchString)) {
+          if (!SPY_IGNORE.has(searchString)) {
             console.log("[PWG Spy] indexOf() called with:", searchString);
             window.postMessage({ type: "PWG_SPY_INCLUDES", str: searchString }, "*");
           }
@@ -111,4 +112,3 @@
   });
   require_inject();
 })();
-//# sourceMappingURL=inject.js.map
