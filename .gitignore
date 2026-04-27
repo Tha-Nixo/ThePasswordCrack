@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+# dist/  <-- Inclusa intenzionalmente per il caricamento diretto dell'estensione
+
+# Releases
+*.zip
+
+# Logs and temporary files
+output_map.txt
+youtube-titles.txt
+youtube-durations.txt
+scratch/
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
